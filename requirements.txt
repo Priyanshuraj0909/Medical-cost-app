@@ -1,0 +1,11 @@
+fastapi==0.127.0
+uvicorn==0.40.0
+
+pydantic==2.12.5
+typing_extensions==4.15.0
+
+numpy==1.26.4
+pandas==2.2.3
+scipy==1.11.4
+
+lightgbm==4.6.0
