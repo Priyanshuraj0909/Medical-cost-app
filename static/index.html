@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/static/favicon.svg" type="image/svg+xml"><title>CareEstimate · Medical cost planner</title><link rel="stylesheet" href="/static/style.css"><script src="/static/app.js" defer></script></head>
+<body>
+<header><a class="brand" href="/"><span class="mark">✚</span> CareEstimate</a><a href="/docs">API documentation ↗</a></header>
+<main>
+<section class="intro"><span class="eyebrow">YOUR HEALTH. YOUR PLAN.</span><h1>A clearer picture of<br>your medical costs.</h1><p>Turn your health profile into an annual cost estimate.<br>Make room in your budget for what matters.</p><div class="tags"><span>◈ Personalized estimate</span><span>◎ No account needed</span></div></section>
+<div class="workspace">
+<form id="estimate-form">
+<div class="form-heading"><div><span class="eyebrow">01 / YOUR PROFILE</span><h2>Let’s start with you</h2></div><button class="text-button" id="example" type="button">Use an example</button></div>
+<fieldset><legend>Personal details</legend><div class="fields">
+<label>Age <span>years</span><input name="age" type="number" min="0" max="120" value="35" required></label>
+<label>Gender<select name="gender_raw"><option value="female">Female</option><option value="male">Male</option></select></label>
+<label>Height <span>cm</span><input name="height_cm" type="number" min="1" max="300" step="any" value="165" required></label>
+<label>Weight <span>kg</span><input name="weight_kg" type="number" min="1" max="700" step="any" value="65" required></label>
+<label>Location<select name="city"><option value="urban">Urban</option><option value="semi-urban">Semi-urban</option><option value="rural">Rural</option></select></label>
+<label>Smoking status<select name="smoker_raw"><option value="no">Non-smoker</option><option value="yes">Smoker</option></select></label>
+</div></fieldset>
+<fieldset><legend>Lifestyle & health</legend><div class="fields">
+<label>Physical activity<select name="physical_activity_level_raw"><option value="medium">Moderate</option><option value="low">Low</option><option value="high">High</option></select></label>
+<label>Daily steps<input name="daily_steps" type="number" min="0" max="100000" value="7000" required></label>
+<label>Sleep <span>hours / night</span><input name="sleep_hours" type="number" min="0" max="24" step="any" value="7" required></label>
+<label>Stress <span>1–10</span><input name="stress_level" type="number" min="1" max="10" value="4" required></label>
+</div><p class="field-note">Select any existing conditions</p><div class="conditions"><label><input type="checkbox" name="diabetes"> Diabetes</label><label><input type="checkbox" name="hypertension"> Hypertension</label><label><input type="checkbox" name="heart_disease"> Heart disease</label><label><input type="checkbox" name="asthma"> Asthma</label></div></fieldset>
+<fieldset><legend>Care & insurance</legend><div class="fields">
+<label>Doctor visits <span>per year</span><input name="doctor_visits_per_year" type="number" min="0" value="3" required></label>
+<label>Hospital admissions <span>per year</span><input name="hospital_admissions" type="number" min="0" value="0" required></label>
+<label>Current medications<input name="medication_count" type="number" min="0" value="0" required></label>
+<label>Last year’s medical cost<input name="previous_year_cost" type="number" min="0" step="any" value="5000" required></label>
+<label>Insurance type<select name="insurance_type_raw"><option value="private">Private</option><option value="government">Government</option><option value="no_insurance">No insurance</option></select></label>
+<label>Insurance coverage <span>%</span><input name="coverage_percent" type="number" min="0" max="100" step="any" value="80" required></label>
+</div></fieldset>
+<p id="error" role="alert" hidden></p><button class="primary" id="submit" type="submit">Calculate my estimate <span>↗</span></button><p class="privacy">Your details are used for this calculation and are not saved by this app.</p>
+</form>
+<aside><section class="result-card" aria-live="polite" aria-atomic="true"><span class="eyebrow">02 / YOUR ESTIMATE</span><div class="result-icon">↗</div><h2 id="result-heading">Plan with a little<br>more clarity.</h2><p id="result-description">Complete your profile to see your estimated annual medical cost.</p><div id="result" hidden><div class="amount" id="amount"></div><span class="unit">estimated annual cost · dataset currency units</span><div class="monthly"><span>Monthly equivalent</span><strong id="monthly"></strong></div></div><div class="result-footer"><span class="dot"></span> Powered by your trained LightGBM model</div></section><section class="help"><h3>A starting point for your budget</h3><p>This model estimate is not a bill or an insurance quote. Actual costs can vary. The training dataset’s currency has not been verified.</p><p>Check your insurance policy and local care prices when planning expenses.</p></section><a class="api-link" href="/docs">Explore the prediction API <span>↗</span></a></aside>
+</div>
+<footer>CareEstimate <span>Built for a more informed tomorrow.</span></footer>
+</main></body></html>

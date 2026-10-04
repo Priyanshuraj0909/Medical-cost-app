@@ -1,0 +1,26 @@
+name: Validate application
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+      - run: python -m pytest -q
+      - run: docker build -t medical-cost-app .
+      - name: Container smoke test
+        run: |
+          docker run -d --name medical-cost-app -p 8000:8000 medical-cost-app
+          ready=0
+          for attempt in $(seq 1 30); do
+            if curl --fail http://localhost:8000/health; then ready=1; break; fi
+            sleep 2
+          done
+          if [ "$ready" -ne 1 ]; then docker logs medical-cost-app; exit 1; fi
+          curl --fail http://localhost:8000/ > /dev/null
