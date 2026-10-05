@@ -1,5 +1,6 @@
 from pydantic import Field , BaseModel , model_validator
-from typing import Annotated
+from typing import Annotated, Literal
+from pydantic import ConfigDict, field_validator
 insurance_map = {
     "no_insurance": 2,
     "government": 1,
@@ -43,6 +44,15 @@ MODEL_FEATURES = [
 # PUBLIC API MODEL (THIS IS WHAT /docs SHOWS)
 # =====================================================
 class UserRequest(BaseModel):
+    model_config = ConfigDict(allow_inf_nan=False)
+
+    @field_validator("insurance_type_raw", "smoker_raw", "physical_activity_level_raw", "gender_raw", "city", mode="before")
+    @classmethod
+    def normalize_categories(cls, value):
+        if isinstance(value, str):
+            return value.strip().lower().replace("semi urban", "semi-urban")
+        return value
+
     insurance_coverage_frac: Annotated[
         float,
         Field(
@@ -53,64 +63,64 @@ class UserRequest(BaseModel):
         )
     ]
     insurance_type_raw: Annotated[
-        str,
+        Literal["private", "government", "no_insurance"],
         Field(description="Type of insurance: private, government, or no_insurance")
     ]
 
     smoker_raw: Annotated[
-        str,
+        Literal["yes", "no"],
         Field(description="Smoking status: yes or no")
     ]
     physical_activity_level_raw: Annotated[
-        str,
+        Literal["low", "medium", "high"],
         Field(description="Physical activity level: low, medium, or high")
     ]
     gender_raw: Annotated[
-        str,
+        Literal["male", "female"],
         Field(description="Gender: male or female")
     ]
     city: Annotated[
-        str,
+        Literal["urban", "semi-urban", "rural"],
         Field(description="City type: urban, semi-urban, or rural")
     ]
 
     height_cm: Annotated[
         float,
-        Field(description="Height in centimeters. Used to calculate BMI")
+        Field(gt=0, le=300, description="Height in centimeters. Used to calculate BMI")
     ]
     weight_kg: Annotated[
         float,
-        Field(description="Weight in kilograms. Used to calculate BMI")
+        Field(gt=0, le=700, description="Weight in kilograms. Used to calculate BMI")
     ]
 
     age: Annotated[
         int,
-        Field(description="Age in years")
+        Field(ge=0, le=120, description="Age in years")
     ]
     medication_count: Annotated[
         int,
-        Field(description="Number of medications currently taken")
+        Field(ge=0, description="Number of medications currently taken")
     ]
     heart_disease: Annotated[
-        int,
+        Literal[0, 1],
         Field(description="1 if patient has heart disease, else 0")
     ]
     diabetes: Annotated[
-        int,
+        Literal[0, 1],
         Field(description="1 if patient has diabetes, else 0")
     ]
     previous_year_cost: Annotated[
         float,
-        Field(description="Total medical cost in the previous year")
+        Field(ge=0, description="Total medical cost in the previous year")
     ]
 
     daily_steps: Annotated[
         int,
-        Field(description="Average number of steps per day")
+        Field(ge=0, le=100000, description="Average number of steps per day")
     ]
     sleep_hours: Annotated[
         float,
-        Field(description="Average sleep duration per day in hours")
+        Field(ge=0, le=24, description="Average sleep duration per day in hours")
     ]
     stress_level: Annotated[
         int,
@@ -118,20 +128,20 @@ class UserRequest(BaseModel):
     ]
 
     hypertension: Annotated[
-        int,
+        Literal[0, 1],
         Field(default=0, description="1 if patient has hypertension, else 0")
     ]
     asthma: Annotated[
-        int,
+        Literal[0, 1],
         Field(default=0, description="1 if patient has asthma, else 0")
     ]
     doctor_visits_per_year: Annotated[
         int,
-        Field(default=7, description="Number of doctor visits per year")
+        Field(default=7, ge=0, description="Number of doctor visits per year")
     ]
     hospital_admissions: Annotated[
         int,
-        Field(default=2, description="Number of hospital admissions per year")
+        Field(default=2, ge=0, description="Number of hospital admissions per year")
     ]
 
 

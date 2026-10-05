@@ -1,247 +1,131 @@
-# Medical Cost Prediction API
+# CareEstimate — Medical Cost App
 
-A FastAPI-based web service that predicts medical insurance costs using a Light Gradient Boosting Machine (LightGBM) model. This application takes patient health data and lifestyle information as input and returns an estimated annual medical cost.
+A responsive medical cost planner backed by the repository’s trained LightGBM model and FastAPI. Enter health, lifestyle, medical history, and insurance details to see an estimated annual cost and its monthly equivalent.
 
-## Overview
+## Run locally
 
-This project implements a machine learning prediction API that estimates medical expenses based on various health and demographic factors. The model is trained using LightGBM, a high-performance gradient boosting framework, and serves predictions through a REST API built with FastAPI.
+Use **Python 3.10–3.12**; Python 3.12 is used in Docker and CI. The pinned NumPy/SciPy versions do not support newer Python versions.
 
-## Features
-
-- **REST API Endpoints** for real-time medical cost predictions
-- **Health Check** endpoint for monitoring API status
-- **Input Validation** using Pydantic schemas
-- **Docker Support** for containerized deployment
-- **LightGBM Model** for accurate cost predictions
-
-## Project Structure
-
-```
-medical/
-├── app.py                          # Main FastAPI application
-├── requirements.txt                # Python dependencies
-├── Dockerfile                      # Docker configuration
-├── README.md                       # This file
-├── LGBMRegressor_and_feature_engineering.ipynb  # Model training notebook
-├── model/
-│   └── lgbm_medical_cost_model.pkl # Trained LightGBM model
-└── schema/
-    ├── user_input.py              # Request schema and feature mappings
-    └── output.py                  # Response schema
-```
-
-## Installation
-
-### Prerequisites
-
-- Python 3.10 or higher
-- pip or conda package manager
-
-### Local Setup
-
-1. Clone or download the repository:
 ```bash
-cd medical
-```
-
-2. Install dependencies:
-```bash
+python3.12 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
+uvicorn app:app --reload --host 127.0.0.1 --port 8000
 ```
 
-3. Run the application:
-```bash
-uvicorn app:app --reload
-```
+On macOS, if LightGBM reports a missing OpenMP library, install it with `brew install libomp`.
 
-The API will be available at `http://localhost:8000`
+- Web app: http://localhost:8000
+- Interactive API documentation: http://localhost:8000/docs
+- Health check: http://localhost:8000/health
 
-### Docker Setup
+The app loads the model during startup and verifies feature names and order. Files are resolved relative to `app.py`, so loading is independent of your working directory.
 
-Build and run the application using Docker:
+## API
 
-```bash
-# Build the Docker image
-docker build -t medical-cost-api .
+`GET /` serves the web interface. `GET /health` returns status, model version, and `model loaded`; it returns HTTP 503 if the model is unavailable.
 
-# Run the container
-docker run -p 8000:8000 medical-cost-api
-```
+`POST /predict` accepts this request:
 
-## Dependencies
-
-- **fastapi** (0.127.0) - Web framework for building APIs
-- **uvicorn** (0.40.0) - ASGI server
-- **pydantic** (2.12.5) - Data validation and settings management
-- **numpy** (1.26.4) - Numerical computing
-- **pandas** (2.2.3) - Data manipulation
-- **scipy** (1.11.4) - Scientific computing
-- **lightgbm** (4.6.0) - Gradient boosting library
-
-## API Endpoints
-
-### 1. Home Endpoint
-```
-GET /
-```
-Returns a welcome message.
-
-**Response:**
 ```json
 {
-  "message": "Calculate your total health expenditure"
-}
-```
-
-### 2. Health Check
-```
-GET /health
-```
-Returns the API health status and model information.
-
-**Response:**
-```json
-{
-  "status": "ok",
-  "version": "1.0.0",
-  "model loaded": true
-}
-```
-
-### 3. Predict Medical Cost
-```
-POST /predict
-```
-Predicts medical insurance cost based on patient health data.
-
-**Request Body:**
-```json
-{
-  "age": 45,
-  "gender": "M",
-  "bmi": 24.5,
-  "smoker": false,
-  "diabetes": false,
-  "hypertension": false,
-  "heart_disease": false,
-  "asthma": false,
-  "physical_activity_level": "high",
-  "daily_steps": 10000,
+  "age": 35,
+  "gender_raw": "female",
+  "height_cm": 165,
+  "weight_kg": 65,
+  "city": "urban",
+  "smoker_raw": "no",
+  "physical_activity_level_raw": "medium",
+  "daily_steps": 7000,
   "sleep_hours": 7,
-  "stress_level": 5,
+  "stress_level": 4,
+  "diabetes": 0,
+  "hypertension": 0,
+  "heart_disease": 0,
+  "asthma": 0,
   "doctor_visits_per_year": 3,
   "hospital_admissions": 0,
   "medication_count": 0,
-  "insurance_coverage_frac": 0.8,
-  "insurance_type": "private",
   "previous_year_cost": 5000,
-  "city_type": "Urban",
-  "out_of_pocket_fraction": 0.2
+  "insurance_type_raw": "private",
+  "insurance_coverage_frac": 0.8
 }
 ```
 
-**Response:**
+Response for this example using the included model:
+
 ```json
-{
-  "predicted_medical_cost": 12000.50
-}
+{"predicted_medical_cost": 1094.90}
 ```
 
-## Model Features
+Categories are case-insensitive and trimmed:
 
-The model uses the following 20 features for predictions:
+| Field | Values |
+| --- | --- |
+| `gender_raw` | `male`, `female` |
+| `smoker_raw` | `yes`, `no` |
+| `city` | `urban`, `semi-urban` (also `semi urban`), `rural` |
+| `physical_activity_level_raw` | `low`, `medium`, `high` |
+| `insurance_type_raw` | `private`, `government`, `no_insurance` |
+| Condition flags | `0`, `1` |
 
-- **Demographics:** age, gender
-- **Health Metrics:** bmi, smoker, diabetes, hypertension, heart_disease, asthma
-- **Lifestyle:** physical_activity_level, daily_steps, sleep_hours, stress_level
-- **Medical History:** doctor_visits_per_year, hospital_admissions, medication_count
-- **Insurance:** insurance_type, insurance_coverage_frac
-- **Financial:** previous_year_cost, out_of_pocket_frac
-- **Location:** city_type
+Insurance coverage is a fraction from 0 to 1 in the API; the web form accepts a percentage. BMI and out-of-pocket fraction are derived automatically. Negative counts/costs, invalid categories, zero height/weight, non-finite numbers, and out-of-range age/sleep/stress/coverage return HTTP 422. Prediction failures return HTTP 503 without exposing internal errors.
 
-## Schema Details
-
-### Feature Mappings
-
-**Insurance Type:**
-- `no_insurance`: 2
-- `government`: 1
-- `private`: 0
-
-**Activity Level:**
-- `low`: 2
-- `medium`: 1
-- `high`: 0
-
-## Development
-
-### Model Training
-
-The model was trained and evaluated using the Jupyter notebook:
-- `LGBMRegressor_and_feature_engineering.ipynb`
-
-This notebook contains:
-- Exploratory data analysis
-- Feature engineering
-- Model training
-- Hyperparameter tuning
-- Model evaluation
-
-### Running Locally with Hot Reload
+## Tests
 
 ```bash
-uvicorn app:app --reload --host 0.0.0.0 --port 8000
+pip install -r requirements-dev.txt
+python -m pytest -q
 ```
 
-### Interactive API Documentation
+The tests exercise the actual model, feature engineering, category normalization, invalid inputs, page/assets/docs, health checks, and prediction failures. GitHub Actions runs tests, builds the Docker image, and checks the running container on pushes and pull requests.
 
-Once the server is running, visit:
-- **Swagger UI:** `http://localhost:8000/docs`
-- **ReDoc:** `http://localhost:8000/redoc`
+## Docker
 
-## Model Performance
-
-The LightGBM model is trained to predict medical costs with high accuracy. The trained model is serialized and stored at:
-```
-model/lgbm_medical_cost_model.pkl
-```
-
-## Error Handling
-
-The API includes validation for all input fields:
-- Required fields must be provided
-- Numeric fields have specified ranges
-- Invalid input will return a 422 Unprocessable Entity response with validation details
-
-## Deployment
-
-### Production Deployment
-
-For production environments:
-
-1. **Use a production ASGI server** (e.g., Gunicorn with Uvicorn workers):
 ```bash
-gunicorn app:app --workers 4 --worker-class uvicorn.workers.UvicornWorker
+docker build -t medical-cost-app .
+docker run --rm -p 8000:8000 medical-cost-app
 ```
 
-2. **Use the provided Dockerfile** for containerized deployment
+The image uses Python 3.12, installs OpenMP, runs as a non-root user, and includes a health check. `PORT` defaults to 8000 and can be overridden (adjust the port mapping too).
 
-3. **Set environment variables** for configuration as needed
+## Deploy on Vercel
 
-## Version
+The project uses Vercel’s FastAPI preset with Python 3.12 (`.python-version`). `vercel.json` sets the function timeout and excludes development files. The model and web assets remain available in the deployment.
 
-Current API Version: **1.0.0**
+Import this repository into Vercel and select the FastAPI framework, or run `npx vercel --prod` from this folder after signing in. No environment variables are required.
 
-## License
+Reference: [Vercel FastAPI deployment](https://vercel.com/docs/frameworks/backend/fastapi).
 
-This project is provided as-is for medical cost prediction purposes.
+## Deploy on Render
 
-## Support
+`render.yaml` defines one Docker web service with `/health` readiness checks. Both the web interface and API run in the same service, with no separate frontend hosting required.
 
-For issues or questions about the API, please refer to the FastAPI documentation or contact the development team.
+1. Push these changes to your GitHub repository.
+2. In Render, create a **Blueprint** and connect `Priyanshuraj0909/medical-cost-app`.
+3. Review the service configuration from `render.yaml`, then deploy.
+4. Visit the generated service URL and confirm `/health` and a form prediction work.
 
-## Notes
+The configuration requests the free plan. Review current plan availability and limitations in Render before deploying. Hosting credentials are not needed locally, and no public deployment is created just by adding these files.
 
-- The model requires specific feature engineering to maintain prediction accuracy
-- Input values should be within reasonable ranges for health and demographic data
-- The model performs best on data similar to its training distribution
+References: [Render FastAPI deployment](https://render.com/docs/deploy-fastapi), [Blueprint specification](https://render.com/docs/blueprint-spec), [health checks](https://render.com/docs/health-checks).
+
+## Project structure
+
+```text
+app.py                    FastAPI routes, startup, model inference
+schema/                   Request validation and feature engineering
+model/                    Original trained LightGBM pickle
+static/                   HTML, CSS, and JavaScript web interface
+tests/                    API and model integration tests
+LGBMRegressor_and_feature_engineering.ipynb  Original training notebook
+Dockerfile                Container packaging
+render.yaml               Render deployment configuration
+.github/workflows/ci.yml  Tests and container checks
+```
+
+## Model and data limitations
+
+The original training dataset is not included, and its currency, provenance, and intended population have not been verified. Estimates are therefore labeled as **dataset currency units**, rather than asserting rupees or another currency. The monthly figure is the annual prediction divided by twelve, not a separate prediction. The notebook alone does not establish performance on new users.
+
+This is a model estimate, not a bill or insurance quote. Confirm insurance coverage and local care prices before making spending decisions. The app does not save submitted profile data or log request bodies. Only load model pickle files from trusted sources.
