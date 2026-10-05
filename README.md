@@ -91,7 +91,7 @@ The image uses Python 3.12, installs OpenMP, runs as a non-root user, and includ
 
 ## Deploy on Vercel
 
-The project uses Vercel’s FastAPI preset with Python 3.12 (`.python-version`). `vercel.json` sets the function timeout and excludes development files. The model and web assets remain available in the deployment.
+The project uses Vercel’s FastAPI preset with Python 3.12 (`.python-version`). `vercel.json` sets the function timeout and excludes development files. The model and web assets remain available in the deployment. `vercel_build.py` bundles the build machine’s OpenMP library, which is preloaded before LightGBM starts because the function runtime does not include it.
 
 Import this repository into Vercel and select the FastAPI framework, or run `npx vercel --prod` from this folder after signing in. No environment variables are required.
 
