@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 from pathlib import Path
+import ctypes
 import logging
 import pickle
 
@@ -18,6 +19,9 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    openmp = BASE_DIR / "native/libgomp.so.1"
+    if openmp.is_file():
+        ctypes.CDLL(str(openmp), mode=ctypes.RTLD_GLOBAL)
     with (BASE_DIR / "model/lgbm_medical_cost_model.pkl").open("rb") as file:
         model = pickle.load(file)
     actual = [name.replace("-", "_") for name in model.booster_.feature_name()]
