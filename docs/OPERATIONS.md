@@ -96,3 +96,7 @@ After local API, browser and Docker checks pass on a push to `main`, GitHub Acti
 Run the same command locally to verify a release. `--attempts 1` disables retries. A successful Vercel build does not imply this public connectivity check passed. Concurrent releases may supersede one another; an older run can fail its exact-asset checks after a newer release goes live.
 
 During version 4 verification on 30 October 2026, the public hostname resolved locally to edge addresses that timed out before TLS. The same public hostname returned version 4 through another Vercel edge address, without authentication. The alias was confirmed on the correct production deployment. This distinguishes deployment readiness from connectivity on that local network; a DNS override is diagnostic evidence, not proof of ordinary public reachability. The independent GitHub production job checks the latter.
+
+## CSV drag and drop
+
+The CSV upload area accepts one `.csv` file through drag and drop or the native keyboard-accessible file chooser. Both paths share size, UTF-8 and row validation. The selected filename and size are shown as text; replacing or clearing a file invalidates old results and aborts in-flight work. Dropping multiple files or a non-CSV file gives a visible error. The shell cache advances to version 5 for this interface update.

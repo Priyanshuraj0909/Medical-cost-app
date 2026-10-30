@@ -144,6 +144,13 @@ window.CareI18n = (() => {
     "unavailable": "अनुपलब्ध",
     "The CSV must use UTF-8 encoding.": "CSV का एन्कोडिंग UTF-8 होना चाहिए।",
     "CSV uploads must be no larger than 131072 bytes.": "CSV अपलोड 131072 बाइट से अधिक नहीं होना चाहिए।",
+    "Drag & drop your CSV here": "अपनी CSV फ़ाइल यहाँ खींचकर छोड़ें",
+    "or": "या",
+    "browse files": "फ़ाइल चुनें",
+    "One CSV file · UTF-8 · up to 128 KB": "एक CSV फ़ाइल · UTF-8 · अधिकतम 128 KB",
+    "Selected: {name} · {size} KB": "चुनी गई फ़ाइल: {name} · {size} KB",
+    "Choose one CSV file at a time.": "एक बार में एक CSV फ़ाइल चुनें।",
+    "Please choose a .csv file.": "कृपया .csv फ़ाइल चुनें।",
   };
   let language = 'en';
   try { language = localStorage.getItem('careestimate-language') === 'hi' ? 'hi' : 'en'; } catch { /* Preferences are optional. */ }

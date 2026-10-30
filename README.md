@@ -144,7 +144,7 @@ The image runs as a non-root user, includes OpenMP, and checks `/health`. Its in
 5. Select **Keep for comparison**, change inputs, then calculate again to compare profiles.
 6. Explore the scenario panel to change one factor and compare an alternate estimate without editing your main profile.
 7. Save up to six scenarios to the **Scenario workspace**, rename them, and compare their estimates and changed factors. Editing the main form clears saved scenarios.
-8. Use **Batch CSV estimates** to download a template, upload a UTF-8 CSV, select **Validate CSV**, then **Predict valid rows** and **Download results CSV**. Invalid rows remain in the results with field errors.
+8. Use **Batch CSV estimates** to download a template, drag a UTF-8 CSV into the upload area (or select **browse files**), select **Validate CSV**, then **Predict valid rows** and **Download results CSV**. Invalid rows remain in the results with field errors.
 9. Select **Download summary** for JSON, or **Print / Save PDF** for a browser-generated report. **Clear comparison** removes the kept estimate.
 10. Use the header to switch English/Hindi or light/dark mode. Where supported, **Install app** adds the app to your device.
 

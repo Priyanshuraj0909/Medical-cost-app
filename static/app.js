@@ -272,6 +272,13 @@ async function requestPrediction(payload, signal) {
 let batchText = null;
 let batchResult = null;
 let batchController = null;
+let batchFile = null;
+const batchDropzone = $('#batch-dropzone');
+function renderBatchFile() {
+  $('#batch-file-info').hidden = !batchFile;
+  $('#batch-file-info').textContent = batchFile ? t('Selected: {name} · {size} KB', { name: batchFile.name, size: (batchFile.size / 1024).toFixed(1) }) : '';
+  batchDropzone.classList.toggle('has-file', Boolean(batchFile));
+}
 function batchControls() {
   const loading = Boolean(batchController);
   $('#batch-validate').disabled = loading || batchText === null;
@@ -282,6 +289,7 @@ function batchControls() {
 function clearBatch({ resetFile = true } = {}) {
   batchController?.abort(); batchController = null; batchText = null; batchResult = null;
   if (resetFile) $('#batch-file').value = '';
+  batchFile = null; renderBatchFile();
   $('#batch-rows').replaceChildren(); $('#batch-results').hidden = true;
   $('#batch-status').textContent = t('Choose a file to begin.'); $('#batch-error').hidden = true; batchControls();
 }
@@ -302,21 +310,49 @@ function renderBatch() {
   }
   $('#batch-results').hidden = false; batchControls();
 }
-$('#batch-file').addEventListener('change', async () => {
-  const file = $('#batch-file').files[0]; clearBatch({ resetFile: false });
-  if (!file) return;
+async function loadBatchFiles(files) {
+  const selected = [...files]; clearBatch({ resetFile: false });
+  if (!selected.length) return;
+  const controller = new AbortController(); batchController = controller; batchControls();
   try {
+    if (selected.length !== 1) throw new Error(t('Choose one CSV file at a time.'));
+    const file = selected[0];
+    if (!/\.csv$/i.test(file.name)) throw new Error(t('Please choose a .csv file.'));
     if (file.size > 128 * 1024) throw new Error(t('CSV uploads must be no larger than 131072 bytes.'));
-    const controller = new AbortController(); batchController = controller; batchControls();
     const buffer = await file.arrayBuffer();
     if (controller.signal.aborted) return;
     batchText = new TextDecoder('utf-8', { fatal: true }).decode(buffer);
-    batchController = null; $('#batch-status').textContent = t('CSV ready. Validate it before predicting.'); batchControls();
+    batchFile = { name: file.name, size: file.size }; renderBatchFile();
+    $('#batch-status').textContent = t('CSV ready. Validate it before predicting.');
   } catch (failure) {
-    batchController = null; batchText = null; batchControls();
+    if (controller.signal.aborted) return;
+    batchText = null; $('#batch-file').value = '';
     $('#batch-error').textContent = failure instanceof TypeError ? t('The CSV must use UTF-8 encoding.') : failure.message; $('#batch-error').hidden = false;
+  } finally {
+    if (batchController === controller) { batchController = null; batchControls(); }
   }
+}
+$('#batch-file').addEventListener('change', event => loadBatchFiles(event.target.files));
+let dragDepth = 0;
+function resetBatchDrag() { dragDepth = 0; batchDropzone.classList.remove('is-dragging'); }
+batchDropzone.addEventListener('dragenter', event => {
+  if (!event.dataTransfer?.types.includes('Files')) return;
+  event.preventDefault(); dragDepth++; batchDropzone.classList.add('is-dragging');
 });
+batchDropzone.addEventListener('dragover', event => {
+  if (!event.dataTransfer?.types.includes('Files')) return;
+  event.preventDefault(); event.dataTransfer.dropEffect = 'copy';
+});
+batchDropzone.addEventListener('dragleave', () => {
+  if (--dragDepth <= 0) resetBatchDrag();
+});
+batchDropzone.addEventListener('drop', event => {
+  event.preventDefault(); resetBatchDrag();
+  if (!event.dataTransfer?.files.length) return;
+  $('#batch-file').files = event.dataTransfer.files;
+  loadBatchFiles(event.dataTransfer.files);
+});
+window.addEventListener('dragend', resetBatchDrag);
 async function runBatch(operation) {
   if (batchText === null || batchController) return;
   const controller = new AbortController(); batchController = controller;
@@ -357,7 +393,10 @@ $('#batch-download').addEventListener('click', () => {
   const link = document.createElement('a'); link.href = url; link.download = 'careestimate-batch-results.csv';
   document.body.append(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
 });
-document.addEventListener('careestimate:language', renderBatch);
+document.addEventListener('careestimate:language', () => {
+  renderBatchFile(); renderBatch();
+  if (batchText !== null && !batchResult) $('#batch-status').textContent = t('CSV ready. Validate it before predicting.');
+});
 function failureText(failure) {
   return failure.name === 'TimeoutError' ? t('The request took too long. Please try again.') : failure instanceof TypeError ? t('Could not connect to the prediction service. Please try again.') : failure.message;
 }

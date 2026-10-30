@@ -295,3 +295,57 @@ test('mobile CSV preview, partial prediction, download and clearing', async () =
     assert.deepEqual(errors, []);
   } finally { await page.context().close(); }
 });
+
+test('CSV drag and drop, replacement errors, keyboard browsing and Hindi labels', async () => {
+  const { page, errors } = await pageFor();
+  try {
+    const template = await readFile('static/batch-template.csv', 'utf8');
+    async function drop(files) {
+      const transfer = await page.evaluateHandle(files => {
+        const data = new DataTransfer();
+        for (const file of files) data.items.add(new File([file.text], file.name, { type: file.type || 'text/csv' }));
+        return data;
+      }, files);
+      try {
+        await page.locator('#batch-dropzone').dispatchEvent('dragenter', { dataTransfer: transfer });
+        assert.match(await page.locator('#batch-dropzone').getAttribute('class'), /is-dragging/);
+        await page.locator('#batch-dropzone').dispatchEvent('dragover', { dataTransfer: transfer });
+        await page.locator('#batch-dropzone').dispatchEvent('drop', { dataTransfer: transfer });
+      } finally { await transfer.dispose(); }
+    }
+    await drop([{ name: 'profiles.csv', text: template }]);
+    await page.waitForFunction(() => !document.querySelector('#batch-validate').disabled);
+    assert.match(await page.locator('#batch-file-info').innerText(), /profiles.csv.*KB/);
+    assert.doesNotMatch(await page.locator('#batch-dropzone').getAttribute('class'), /is-dragging/);
+    await page.locator('#batch-validate').click();
+    await page.waitForFunction(() => !document.querySelector('#batch-predict').disabled);
+    await page.locator('#batch-predict').click();
+    await page.waitForFunction(() => !document.querySelector('#batch-download').disabled);
+    assert.match(await page.locator('#batch-rows').innerText(), /₹1,094.90/);
+    await drop([{ name: 'first.csv', text: template }, { name: 'second.csv', text: template }]);
+    assert.match(await page.locator('#batch-error').innerText(), /one CSV file/);
+    assert.equal(await page.locator('#batch-results').isVisible(), false);
+    assert.equal(await page.locator('#batch-download').isDisabled(), true);
+    await drop([{ name: 'profile.txt', text: template }]);
+    assert.match(await page.locator('#batch-error').innerText(), /choose a .csv file/);
+    await drop([{ name: 'large.csv', text: 'x'.repeat(131073) }]);
+    assert.match(await page.locator('#batch-error').innerText(), /131072 bytes/);
+    await page.locator('#batch-file').focus();
+    const chooser = page.waitForEvent('filechooser');
+    await page.locator('#batch-file').press('Enter');
+    await (await chooser).setFiles({ name: 'keyboard.csv', mimeType: 'text/csv', buffer: Buffer.from(template) });
+    await page.waitForFunction(() => !document.querySelector('#batch-validate').disabled);
+    assert.match(await page.locator('#batch-file-info').innerText(), /keyboard.csv/);
+    await page.locator('#language').selectOption('hi');
+    assert.match(await page.locator('#batch-dropzone').innerText(), /खींचकर छोड़ें/);
+    assert.match(await page.locator('#batch-file-info').innerText(), /चुनी गई फ़ाइल.*keyboard.csv/);
+    assert.match(await page.locator('#batch-status').innerText(), /CSV तैयार है/);
+    const accessibility = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
+    assert.deepEqual(accessibility.violations.map(v => ({ id: v.id, nodes: v.nodes.map(n => n.target) })), []);
+    if (process.env.DROPZONE_SCREENSHOT_PATH) await page.locator('#batch-panel').screenshot({ path: process.env.DROPZONE_SCREENSHOT_PATH });
+    await page.locator('#batch-clear').click();
+    assert.equal(await page.locator('#batch-file-info').isVisible(), false);
+    assert.equal(await page.locator('#batch-file').inputValue(), '');
+    assert.deepEqual(errors, []);
+  } finally { await page.context().close(); }
+});
