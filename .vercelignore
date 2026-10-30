@@ -7,3 +7,8 @@ tests
 artifacts
 .env*
 .DS_Store
+node_modules
+training
+docs
+data
+package*.json

@@ -1,15 +1,17 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/static/favicon.svg" type="image/svg+xml"><title>CareEstimate · Medical cost planner</title><link rel="stylesheet" href="/static/style.css"><script src="/static/app.js" defer></script></head>
+<head><meta charset="utf-8"><meta name="description" content="Explore annual medical cost estimates, understand model factors, and compare profiles with CareEstimate."><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/static/favicon.svg" type="image/svg+xml"><title>CareEstimate · Medical cost planner</title><link rel="stylesheet" href="/static/style.css"><script src="/static/app.js" defer></script></head>
 <body>
+<a class="skip-link" href="#main">Skip to content</a>
 <header><a class="brand" href="/"><span class="mark">✚</span> CareEstimate</a><a href="/docs">API documentation ↗</a></header>
-<main>
-<section class="intro"><span class="eyebrow">YOUR HEALTH. YOUR PLAN.</span><h1>A clearer picture of<br>your medical costs.</h1><p>Turn your health profile into an annual cost estimate.<br>Make room in your budget for what matters.</p><div class="tags"><span>◈ Personalized estimate</span><span>◎ No account needed</span></div></section>
+<main id="main">
+<section class="intro"><span class="eyebrow">YOUR HEALTH. YOUR PLAN.</span><h1>A clearer picture of<br>your medical costs.</h1><p>Turn your health profile into an annual cost estimate.<br>Make room in your budget for what matters.</p><div class="tags"><span>◈ Personalized estimate</span><span>◎ No account needed</span><span>◌ Compare & export</span></div></section>
 <div class="workspace">
-<form id="estimate-form">
+<form id="estimate-form" aria-describedby="scope-note">
 <div class="form-heading"><div><span class="eyebrow">01 / YOUR PROFILE</span><h2>Let’s start with you</h2></div><button class="text-button" id="example" type="button">Use an example</button></div>
+<p class="form-note" id="scope-note">For adults aged 18–89. Estimates use the training dataset’s units; its currency and cost definition are unverified.</p>
 <fieldset><legend>Personal details</legend><div class="fields">
-<label>Age <span>years</span><input name="age" type="number" min="0" max="120" value="35" required></label>
+<label>Age <span>years</span><input name="age" type="number" min="18" max="89" value="35" required></label>
 <label>Gender<select name="gender_raw"><option value="female">Female</option><option value="male">Male</option></select></label>
 <label>Height <span>cm</span><input name="height_cm" type="number" min="1" max="300" step="any" value="165" required></label>
 <label>Weight <span>kg</span><input name="weight_kg" type="number" min="1" max="700" step="any" value="65" required></label>
@@ -23,16 +25,37 @@
 <label>Stress <span>1–10</span><input name="stress_level" type="number" min="1" max="10" value="4" required></label>
 </div><p class="field-note">Select any existing conditions</p><div class="conditions"><label><input type="checkbox" name="diabetes"> Diabetes</label><label><input type="checkbox" name="hypertension"> Hypertension</label><label><input type="checkbox" name="heart_disease"> Heart disease</label><label><input type="checkbox" name="asthma"> Asthma</label></div></fieldset>
 <fieldset><legend>Care & insurance</legend><div class="fields">
-<label>Doctor visits <span>per year</span><input name="doctor_visits_per_year" type="number" min="0" value="3" required></label>
-<label>Hospital admissions <span>per year</span><input name="hospital_admissions" type="number" min="0" value="0" required></label>
+<label>Doctor visits <span>last 12 months</span><input name="doctor_visits_per_year" type="number" min="0" value="3" required></label>
+<label>Hospital admissions <span>last 12 months</span><input name="hospital_admissions" type="number" min="0" value="0" required></label>
 <label>Current medications<input name="medication_count" type="number" min="0" value="0" required></label>
 <label>Last year’s medical cost<input name="previous_year_cost" type="number" min="0" step="any" value="5000" required></label>
-<label>Insurance type<select name="insurance_type_raw"><option value="private">Private</option><option value="government">Government</option><option value="no_insurance">No insurance</option></select></label>
-<label>Insurance coverage <span>%</span><input name="coverage_percent" type="number" min="0" max="100" step="any" value="80" required></label>
+<label>Insurance type<select name="insurance_type_raw" id="insurance-type"><option value="private">Private</option><option value="government">Government</option><option value="no_insurance">No insurance</option></select></label>
+<label>Insurance coverage <span>%</span><input id="coverage-percent" name="coverage_percent" type="number" min="0" max="100" step="any" value="80" required></label>
 </div></fieldset>
-<p id="error" role="alert" hidden></p><button class="primary" id="submit" type="submit">Calculate my estimate <span>↗</span></button><p class="privacy">Your details are used for this calculation and are not saved by this app.</p>
+<p id="error" role="alert" hidden></p><button class="primary" id="submit" type="submit">Calculate my estimate <span>↗</span></button><p class="privacy">Profiles stay in this browser’s memory and are sent to the API for calculation. This app does not save them. Downloads are saved only when you choose.</p>
 </form>
-<aside><section class="result-card" aria-live="polite" aria-atomic="true"><span class="eyebrow">02 / YOUR ESTIMATE</span><div class="result-icon">↗</div><h2 id="result-heading">Plan with a little<br>more clarity.</h2><p id="result-description">Complete your profile to see your estimated annual medical cost.</p><div id="result" hidden><div class="amount" id="amount"></div><span class="unit">estimated annual cost · dataset currency units</span><div class="monthly"><span>Monthly equivalent</span><strong id="monthly"></strong></div></div><div class="result-footer"><span class="dot"></span> Powered by your trained LightGBM model</div></section><section class="help"><h3>A starting point for your budget</h3><p>This model estimate is not a bill or an insurance quote. Actual costs can vary. The training dataset’s currency has not been verified.</p><p>Check your insurance policy and local care prices when planning expenses.</p></section><a class="api-link" href="/docs">Explore the prediction API <span>↗</span></a></aside>
+<aside>
+<section class="result-card" aria-labelledby="result-heading">
+<span class="eyebrow">02 / YOUR ESTIMATE</span><div class="result-icon" aria-hidden="true">↗</div>
+<div role="status" aria-live="polite"><h2 id="result-heading">Plan with a little<br>more clarity.</h2><p id="result-description">Complete your profile to see your estimated annual medical cost.</p></div>
+<div id="result" hidden>
+<div class="amount" id="amount"></div><span class="unit" id="currency-unit">estimated annual cost · dataset currency units</span>
+<div class="monthly"><span>Monthly equivalent</span><strong id="monthly"></strong></div>
+<p class="interval" id="interval"></p><p class="uncertainty" id="uncertainty"></p>
+<div class="result-actions"><button id="pin" type="button" class="secondary">Keep for comparison</button><button id="download" type="button" class="secondary">Download summary ↓</button></div>
+</div>
+<div class="result-footer"><span class="dot"></span><span id="model-version">Powered by LightGBM</span></div>
+</section>
+<section id="baseline-status" class="notice" hidden><p id="baseline-message"></p><button id="clear-baseline" class="text-button" type="button">Clear comparison</button></section>
+<section id="comparison" class="detail-card" hidden aria-labelledby="comparison-heading"><span class="eyebrow">EXPLORE THE DIFFERENCE</span><h3 id="comparison-heading">Two profiles, side by side</h3>
+<table><caption class="sr-only">Annual cost comparison in dataset currency units</caption><thead><tr><th scope="col">Kept estimate</th><th scope="col">Current estimate</th></tr></thead><tbody><tr><td id="baseline-amount"></td><td id="current-amount"></td></tr></tbody></table>
+<p id="difference"></p><ul id="changed-fields"></ul><p class="small">A model comparison shows associations. It does not predict the effect of changing your lifestyle or insurance.</p></section>
+<section id="explanation" class="detail-card" hidden aria-labelledby="explanation-heading"><span class="eyebrow">UNDERSTAND YOUR ESTIMATE</span><h3 id="explanation-heading">What shaped this number?</h3><p class="small">The five largest model contributions. “Higher” and “lower” refer to the model’s average starting value.</p><p id="base-value" class="small"></p><ol id="factors" class="factors"></ol><p class="small">These explain the model’s calculation. They are not causes or guaranteed savings.</p></section>
+<section id="warnings" class="notice" hidden aria-labelledby="warnings-heading"><h3 id="warnings-heading">Before you use this estimate</h3><ul id="warning-list"></ul></section>
+<section class="help"><h3>A starting point for exploration</h3><p>This estimate is not a bill or an insurance quote. The original dataset’s currency and whether the target means total or out-of-pocket spending have not been verified.</p><p>Care counts refer to the preceding 12 months. The original dataset’s feature timing is unverified, so next-year forecasting performance is not established.</p>
+<details id="model-details"><summary>Model scope & validation</summary><p id="model-status">Loading model information…</p><a href="/model-info">View model information ↗</a></details></section>
+<a class="api-link" href="/docs">Explore the prediction API <span>↗</span></a>
+</aside>
 </div>
 <footer>CareEstimate <span>Built for a more informed tomorrow.</span></footer>
 </main></body></html>

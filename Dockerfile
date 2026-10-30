@@ -7,6 +7,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 RUN useradd --create-home appuser
 COPY --chown=appuser:appuser app.py .
+COPY --chown=appuser:appuser model_bundle.py monitoring.py .
 COPY --chown=appuser:appuser schema ./schema
 COPY --chown=appuser:appuser model ./model
 COPY --chown=appuser:appuser static ./static

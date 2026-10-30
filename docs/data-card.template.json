@@ -1,0 +1,30 @@
+{
+  "source_url": null,
+  "license": null,
+  "currency": null,
+  "population": null,
+  "collection_period": null,
+  "synthetic": null,
+  "target_definition": null,
+  "prediction_time_audit": {
+    "age": null,
+    "gender": null,
+    "bmi": null,
+    "smoker": null,
+    "diabetes": null,
+    "hypertension": null,
+    "heart_disease": null,
+    "asthma": null,
+    "physical_activity_level": null,
+    "daily_steps": null,
+    "sleep_hours": null,
+    "stress_level": null,
+    "doctor_visits_per_year": null,
+    "hospital_admissions": null,
+    "medication_count": null,
+    "insurance_type": null,
+    "insurance_coverage_pct": null,
+    "city_type": null,
+    "previous_year_cost": null
+  }
+}

@@ -8,3 +8,8 @@ __pycache__
 artifacts
 *.ipynb
 tests
+node_modules
+training
+docs
+data
+package*.json

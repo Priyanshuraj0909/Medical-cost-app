@@ -1,0 +1,10 @@
+{
+  "name": "careestimate-browser-checks",
+  "private": true,
+  "scripts": { "test:browser": "node --test tests/browser/*.test.mjs" },
+  "devDependencies": {
+    "@axe-core/playwright": "4.11.1",
+    "playwright": "1.58.2"
+  },
+  "engines": { "node": ">=22" }
+}

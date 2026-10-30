@@ -1,0 +1,33 @@
+{
+  "model_version": "1.0.0",
+  "artifact_file": "lgbm_medical_cost_model.pkl",
+  "artifact_sha256": "d5dae2b4d56c912cbad23568c988ffeaba14971828eb8207941bfc157c501756",
+  "dataset": {
+    "source_url": null,
+    "license": null,
+    "currency": null,
+    "population": null,
+    "collection_period": null,
+    "synthetic": null,
+    "target": "annual_medical_cost",
+    "target_definition": "Unverified: total spending versus patient out-of-pocket spending is not established.",
+    "rows_in_notebook": 5000
+  },
+  "validation_status": "Historical notebook outputs only; original data unavailable for independent reproduction.",
+  "historical_metrics": {
+    "test_r2": 0.9944922364583165,
+    "test_mse": 268649.1462670019,
+    "source": "LGBMRegressor_and_feature_engineering.ipynb, saved cell output; not rerun"
+  },
+  "observed_ranges": {
+    "age": [18, 89],
+    "bmi": [6.4, 43.6],
+    "daily_steps": [1004, 14999],
+    "doctor_visits_per_year": [0, 14],
+    "hospital_admissions": [0, 6],
+    "medication_count": [0, 7],
+    "previous_year_cost": [500, 19996],
+    "out_of_pocket_frac": [0.06, 1]
+  },
+  "interval": null
+}

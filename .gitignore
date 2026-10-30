@@ -9,3 +9,7 @@ artifacts/
 
 .vercel/
 native/
+node_modules/
+data/
+playwright-report/
+test-results/
