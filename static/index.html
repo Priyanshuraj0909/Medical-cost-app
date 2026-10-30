@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en-IN">
 <head><meta charset="utf-8"><meta name="description" content="Explore annual medical cost estimates, understand model factors, and compare profiles with CareEstimate."><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/static/favicon.svg" type="image/svg+xml"><title>CareEstimate · Medical cost planner</title><link rel="stylesheet" href="/static/style.css"><script src="/static/app.js" defer></script></head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
@@ -9,7 +9,7 @@
 <div class="workspace">
 <form id="estimate-form" aria-describedby="scope-note">
 <div class="form-heading"><div><span class="eyebrow">01 / YOUR PROFILE</span><h2>Let’s start with you</h2></div><button class="text-button" id="example" type="button">Use an example</button></div>
-<p class="form-note" id="scope-note">Educational demo for adults aged 18–89. Amounts use dataset units, with no confirmed currency or total versus out-of-pocket cost definition.</p>
+<p class="form-note" id="scope-note">For adults aged 18–89. Amounts use Indian rupee formatting for this demo; no currency conversion is applied.</p>
 <fieldset><legend>Personal details</legend><div class="fields">
 <label>Age <span>years</span><input name="age" type="number" min="18" max="89" value="35" required></label>
 <label>Gender<select name="gender_raw"><option value="female">Female</option><option value="male">Male</option></select></label>
@@ -28,7 +28,7 @@
 <label>Doctor visits <span>last 12 months</span><input name="doctor_visits_per_year" type="number" min="0" value="3" required></label>
 <label>Hospital admissions <span>last 12 months</span><input name="hospital_admissions" type="number" min="0" value="0" required></label>
 <label>Current medications<input name="medication_count" type="number" min="0" value="0" required></label>
-<label>Last year’s medical cost<input name="previous_year_cost" type="number" min="0" step="any" value="5000" required></label>
+<label>Last year’s medical cost <span>₹ · INR display</span><input name="previous_year_cost" type="number" min="0" step="any" value="5000" required></label>
 <label>Insurance type<select name="insurance_type_raw" id="insurance-type"><option value="private">Private</option><option value="government">Government</option><option value="no_insurance">No insurance</option></select></label>
 <label>Insurance coverage <span>%</span><input id="coverage-percent" name="coverage_percent" type="number" min="0" max="100" step="any" value="80" required></label>
 </div></fieldset>
@@ -39,7 +39,7 @@
 <span class="eyebrow">02 / YOUR ESTIMATE</span><div class="result-icon" aria-hidden="true">↗</div>
 <div role="status" aria-live="polite"><h2 id="result-heading">Plan with a little<br>more clarity.</h2><p id="result-description">Complete your profile to see your estimated annual medical cost.</p></div>
 <div id="result" hidden>
-<div class="amount" id="amount"></div><span class="unit" id="currency-unit">estimated annual cost · dataset currency units</span>
+<div class="amount" id="amount"></div><span class="unit" id="currency-unit">estimated annual cost · Indian rupees (INR display)</span>
 <p class="dataset-note" id="dataset-note"></p>
 <div class="monthly"><span>Monthly equivalent</span><strong id="monthly"></strong></div>
 <p class="interval" id="interval"></p><p class="uncertainty" id="uncertainty"></p>
@@ -49,7 +49,7 @@
 </section>
 <section id="baseline-status" class="notice" hidden><p id="baseline-message"></p><button id="clear-baseline" class="text-button" type="button">Clear comparison</button></section>
 <section id="comparison" class="detail-card" hidden aria-labelledby="comparison-heading"><span class="eyebrow">EXPLORE THE DIFFERENCE</span><h3 id="comparison-heading">Two profiles, side by side</h3>
-<table><caption class="sr-only">Annual cost comparison in dataset currency units</caption><thead><tr><th scope="col">Kept estimate</th><th scope="col">Current estimate</th></tr></thead><tbody><tr><td id="baseline-amount"></td><td id="current-amount"></td></tr></tbody></table>
+<table><caption class="sr-only">Annual cost comparison displayed in Indian rupees</caption><thead><tr><th scope="col">Kept estimate</th><th scope="col">Current estimate</th></tr></thead><tbody><tr><td id="baseline-amount"></td><td id="current-amount"></td></tr></tbody></table>
 <p id="difference"></p><ul id="changed-fields"></ul><p class="small">A model comparison shows associations. It does not predict the effect of changing your lifestyle or insurance.</p></section>
 <section id="explanation" class="detail-card" hidden aria-labelledby="explanation-heading"><span class="eyebrow">UNDERSTAND YOUR ESTIMATE</span><h3 id="explanation-heading">What shaped this number?</h3><p class="small">The five largest model contributions. “Higher” and “lower” refer to the model’s average starting value.</p><p id="base-value" class="small"></p><ol id="factors" class="factors"></ol><p class="small">These explain the model’s calculation. They are not causes or guaranteed savings.</p></section>
 <section id="warnings" class="notice" hidden aria-labelledby="warnings-heading"><h3 id="warnings-heading">Check these profile details</h3><ul id="warning-list"></ul></section>

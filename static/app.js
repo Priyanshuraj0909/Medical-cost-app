@@ -3,7 +3,11 @@ const $ = selector => document.querySelector(selector);
 const form = $('#estimate-form');
 const error = $('#error');
 const submit = $('#submit');
-const format = value => new Intl.NumberFormat('en', { maximumFractionDigits: 2, minimumFractionDigits: 2 }).format(value);
+const displayCurrency = {
+  currency: 'INR', locale: 'en-IN', conversion_applied: false,
+  note: 'Amounts are displayed as Indian rupees for this demo without exchange-rate conversion. This display choice does not establish the training dataset’s currency.',
+};
+const format = value => new Intl.NumberFormat(displayCurrency.locale, { style: 'currency', currency: displayCurrency.currency, maximumFractionDigits: 2, minimumFractionDigits: 2 }).format(value);
 const labels = {
   age: 'Age', gender: 'Gender', gender_raw: 'Gender', bmi: 'BMI', smoker: 'Smoking status', smoker_raw: 'Smoking status',
   diabetes: 'Diabetes', hypertension: 'Hypertension', heart_disease: 'Heart disease', asthma: 'Asthma',
@@ -47,7 +51,7 @@ function comparison() {
   $('#baseline-amount').textContent = format(baseline.result.predicted_medical_cost);
   $('#current-amount').textContent = format(current.result.predicted_medical_cost);
   const delta = current.result.predicted_medical_cost - baseline.result.predicted_medical_cost;
-  $('#difference').textContent = delta === 0 ? 'The annual estimates are equal.' : `${format(Math.abs(delta))} ${delta > 0 ? 'higher' : 'lower'} per year in ${current.result.currency}.`;
+  $('#difference').textContent = delta === 0 ? 'The annual estimates are equal.' : `${format(Math.abs(delta))} ${delta > 0 ? 'higher' : 'lower'} per year (INR display).`;
   const changes = $('#changed-fields');
   changes.replaceChildren();
   for (const [key, value] of Object.entries(current.profile)) {
@@ -71,6 +75,7 @@ $('#download').addEventListener('click', () => {
   if (!current) return;
   const summary = {
     generated_at: current.generated_at,
+    display_currency: displayCurrency,
     estimate: current.result,
     comparison: baseline ? { kept_estimate: baseline.result, current_estimate: current.result } : null,
     note: 'Educational model estimate, not a bill or insurance quote. Monthly equivalent is annual cost divided by twelve. Raw profile inputs are omitted from this file.',
@@ -84,7 +89,7 @@ $('#download').addEventListener('click', () => {
 function render(result) {
   $('#amount').textContent = format(result.predicted_medical_cost);
   $('#monthly').textContent = format(result.predicted_medical_cost / 12);
-  $('#currency-unit').textContent = `estimated annual cost · ${result.currency}`;
+  $('#currency-unit').textContent = 'estimated annual cost · Indian rupees (INR display)';
   renderDatasetStatus(result.dataset_status);
   $('#model-version').textContent = `LightGBM · model ${result.model_version}`;
   $('#result-heading').textContent = 'Your annual cost estimate';
@@ -116,24 +121,21 @@ function render(result) {
 }
 
 function renderDatasetStatus(status) {
-  const notes = status?.notes || ['Dataset documentation could not be loaded. Currency and cost definition have not been confirmed.'];
+  const notes = [displayCurrency.note, ...(status?.notes || ['Dataset documentation could not be loaded. Currency and cost definition have not been confirmed.'])];
   const details = $('#dataset-details');
   details.replaceChildren();
   for (const message of notes) {
     const item = document.createElement('li'); item.textContent = message; details.append(item);
   }
-  if (!notes.length) {
-    const item = document.createElement('li'); item.textContent = 'Source, currency and cost definition are documented in the model information.'; details.append(item);
-  }
   const missing = status?.missing_details;
-  const note = !status ? 'Demo estimate. Dataset documentation could not be loaded.'
-    : missing.includes('currency') && missing.includes('cost_definition') ? 'Demo estimate in dataset units. Currency and total versus out-of-pocket cost definition are not documented.'
-    : missing.includes('currency') ? 'Demo estimate in dataset units. Currency is not documented.'
+  const note = !status ? 'INR display for this demo; no currency conversion is applied. Dataset documentation could not be loaded.'
+    : missing.includes('currency') && missing.includes('cost_definition') ? 'INR display for this demo; no currency conversion is applied. Original currency and total versus out-of-pocket cost definition are not documented.'
+    : missing.includes('currency') ? 'INR display for this demo; no currency conversion is applied. Original training currency is not documented.'
     : missing.includes('cost_definition') ? 'Demo estimate. Total versus out-of-pocket cost definition is not documented.'
     : missing.includes('source') ? 'Demo estimate. The original dataset source is not documented.'
     : 'Model estimate. See dataset details for its scope and limitations.';
   $('#dataset-note').textContent = note;
-  $('#scope-note').textContent = `For adults aged 18–89. ${note}`;
+  $('#scope-note').textContent = 'For adults aged 18–89. Amounts use Indian rupee formatting for this demo; no currency conversion is applied.';
 }
 
 form.addEventListener('submit', async event => {

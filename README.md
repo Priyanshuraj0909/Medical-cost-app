@@ -58,7 +58,7 @@ flowchart LR
 ```
 
 > [!NOTE]
-> Costs are displayed in **dataset currency units** because the original dataset’s currency has not been verified. The monthly figure is the annual estimate divided by twelve.
+> The web interface uses **Indian rupee display (₹, INR)** with Indian digit grouping, for example **₹1,23,456.78**. This is a demo presentation choice: no exchange-rate conversion is applied, and the original training currency remains unverified. API `currency` continues to describe the training units; downloaded summaries separately record the INR display choice. The monthly figure is the annual estimate divided by twelve.
 
 ## Getting Started
 

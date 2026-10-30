@@ -38,3 +38,7 @@ The historical model is unchanged. Improvements to interface and validation are 
 Prediction and model-info responses include `dataset_status`: a `documented` or `incomplete` status, missing detail identifiers, and plain-language notes. Currency, source URL and cost definition are checked separately. A documented value is not a claim of independent verification. Missing, blank and placeholder definitions remain incomplete even when currency and source are present.
 
 Missing documentation is shown as a neutral demo note next to the estimate, with details in “Dataset details & model limits.” Yellow warnings are reserved for profile inputs outside recorded ranges. The original documentation gap is unresolved; no currency or cost definition has been invented. Downloaded summaries retain the same structured status.
+
+## Indian rupee display
+
+The web interface formats cost inputs, estimates, monthly equivalents, contributions, prediction intervals and comparisons using Indian rupee labels and `Intl.NumberFormat('en-IN', {style: 'currency', currency: 'INR'})`. The original model values are not converted or rescaled. Dataset documentation remains unchanged: this is an explicit demo display convention, not evidence the model was trained on Indian costs. Downloaded summaries include `display_currency` with `currency: INR`, `locale: en-IN`, `conversion_applied: false` and an explanatory note. API currency still describes training units, independently of browser presentation.

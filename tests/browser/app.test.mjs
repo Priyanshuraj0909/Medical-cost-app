@@ -47,7 +47,9 @@ test('real predictions, explanations, comparison, export and stale-result handli
   try {
     await estimate(page);
     assert.equal(await page.locator('#warnings').isVisible(), false);
-    assert.match(await page.locator('#dataset-note').innerText(), /Currency and total versus out-of-pocket cost definition are not documented/);
+    assert.match(await page.locator('#dataset-note').innerText(), /Original currency and total versus out-of-pocket cost definition are not documented/);
+    assert.equal(await page.locator('#amount').innerText(), '₹1,094.90');
+    assert.match(await page.locator('#monthly').innerText(), /^₹/);
     await page.locator('#model-details summary').click();
     assert.match(await page.locator('#dataset-details').innerText(), /original dataset source is not recorded/);
     await page.locator('#model-details summary').click();
@@ -65,6 +67,8 @@ test('real predictions, explanations, comparison, export and stale-result handli
     const download = await downloadPromise;
     const summary = JSON.parse(await readFile(await download.path(), 'utf8'));
     assert.ok(summary.estimate.explanation);
+    assert.equal(summary.display_currency.currency, 'INR');
+    assert.equal(summary.display_currency.conversion_applied, false);
     assert.ok(summary.comparison);
     assert.equal('profile' in summary, false);
     await page.locator('#clear-baseline').click();
