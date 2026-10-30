@@ -12,7 +12,7 @@ A medical cost planner for people exploring annual healthcare budgets, powered b
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
 ![LightGBM](https://img.shields.io/badge/ML-LightGBM-426B3F)
 
-**[Live Demo](https://medical-cost-app-jade.vercel.app)** · **[API Docs](https://medical-cost-app-jade.vercel.app/docs)** · **[Report an Issue](https://github.com/Priyanshuraj0909/medical-cost-app/issues)**
+**[Live Demo](https://medical-cost-app-king-09.vercel.app)** · **[API Docs](https://medical-cost-app-king-09.vercel.app/docs)** · **[Report an Issue](https://github.com/Priyanshuraj0909/medical-cost-app/issues)**
 
 </div>
 
@@ -135,7 +135,7 @@ The image runs as a non-root user, includes OpenMP, and checks `/health`. Its in
 
 ### Web Interface
 
-1. Open the [live app](https://medical-cost-app-jade.vercel.app) or your local instance.
+1. Open the [live app](https://medical-cost-app-king-09.vercel.app) or your local instance.
 2. Complete **Personal → Health → Insurance** using **Continue** and **Back**. Invalid fields show inline guidance. **Show all fields** opens the complete form.
 3. Select **Calculate my estimate** to view the annual prediction and monthly equivalent.
 4. Read the leading model factors, uncertainty note, and any range warnings.
@@ -263,7 +263,7 @@ Complete the [data-card template](docs/data-card.template.json) first. Follow [t
 
 ### Vercel
 
-The app is deployed at **[medical-cost-app-jade.vercel.app](https://medical-cost-app-jade.vercel.app)**. The connected GitHub repository deploys automatically when changes are pushed to `main`.
+The app is deployed at **[medical-cost-app-king-09.vercel.app](https://medical-cost-app-king-09.vercel.app)**. The connected GitHub repository deploys automatically when changes are pushed to `main`.
 
 To deploy your own copy, import the repository into Vercel using the **FastAPI** preset. Alternatively, sign in and deploy with the CLI:
 
@@ -361,6 +361,6 @@ The application does not save submitted profiles or log request bodies. Comparis
 
 **CareEstimate** · Built for a more informed tomorrow.
 
-[Try the App](https://medical-cost-app-jade.vercel.app) · [Explore the API](https://medical-cost-app-jade.vercel.app/docs)
+[Try the App](https://medical-cost-app-king-09.vercel.app) · [Explore the API](https://medical-cost-app-king-09.vercel.app/docs)
 
 </div>

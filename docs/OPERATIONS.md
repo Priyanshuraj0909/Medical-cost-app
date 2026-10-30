@@ -66,3 +66,11 @@ python scripts/benchmark_inference.py --iterations 300
 ```
 
 A local macOS arm64 run with 150 iterations per path measured median **1.389 ms** for two calls versus **1.342 ms** for one, with p95 **1.534 ms** versus **1.439 ms**. Loading the bundle took about **0.998 s**. These are warmed microbenchmarks on one synthetic example profile, not hosted performance guarantees or model-quality results. Re-run on the deployment environment before making performance claims.
+
+## Public production address
+
+Use **https://medical-cost-app-king-09.vercel.app** and its `/docs` API documentation. This stable team alias points to the current production deployment. An explicitly approved, alias-specific Deployment Protection Exception makes this hostname publicly accessible. The project-wide protection setting remains in place; other deployment URLs may require a Vercel login.
+
+The older `medical-cost-app-jade.vercel.app` hostname timed out through its default edge addresses from the tested connection, even though the application worked through an alternative Vercel edge route. The team alias uses a reachable route and was verified with ordinary HTTPS, without credentials or DNS overrides. Deployment status alone is not a reachability test.
+
+When changing deployment settings, preserve the alias-specific exception or intentionally replace it with a reviewed public domain. Check the public homepage, `/health`, `/predict`, `/sw.js`, and `/static/manifest.webmanifest` after releases. Do not distribute a preview URL that redirects visitors to Vercel authentication.
