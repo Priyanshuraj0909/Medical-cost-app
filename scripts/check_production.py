@@ -8,17 +8,25 @@ from pathlib import Path
 import time
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
-from urllib.request import Request, urlopen
+from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
+class RejectRedirects(HTTPRedirectHandler):
+    """A public app must respond directly, including on generated production URLs."""
+
+    def redirect_request(self, request, fp, code, msg, headers, newurl):
+        return None
+
+
 def check(base_url: str) -> None:
+    opener = build_opener(RejectRedirects())
     def fetch(path, body=None, content_type=None):
         headers = {'User-Agent': 'CareEstimate-release-check/1.0', 'Cache-Control': 'no-cache'}
         if content_type:
             headers['Content-Type'] = content_type
-        with urlopen(Request(base_url + path, data=body, headers=headers), timeout=20) as response:
+        with opener.open(Request(base_url + path, data=body, headers=headers), timeout=20) as response:
             return response.read(), response.headers
 
     def require(condition, message):
@@ -92,7 +100,8 @@ def main():
             return
         except (HTTPError, URLError, TimeoutError, ValueError, KeyError, TypeError, IndexError) as error:
             # Print no response bodies, submitted profile values or credentials.
-            print(f'Attempt {attempt}/{args.attempts} failed: {type(error).__name__}', flush=True)
+            detail = f'HTTP {error.code} at {urlsplit(error.url).path}' if isinstance(error, HTTPError) else str(error) if isinstance(error, ValueError) else type(error).__name__
+            print(f'Attempt {attempt}/{args.attempts} failed: {detail}', flush=True)
             if attempt == args.attempts:
                 raise SystemExit('Production verification failed; inspect deployment readiness and public connectivity.') from None
             time.sleep(args.delay)

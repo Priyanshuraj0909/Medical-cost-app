@@ -69,11 +69,15 @@ A local macOS arm64 run with 150 iterations per path measured median **1.389 ms*
 
 ## Public production address
 
-Use **https://medical-cost-app-king-09.vercel.app** and its `/docs` API documentation. This stable team alias points to the current production deployment. An explicitly approved, alias-specific Deployment Protection Exception makes this hostname publicly accessible. The project-wide protection setting remains in place; other deployment URLs may require a Vercel login.
+Use **https://medical-cost-app-king-09.vercel.app** and its `/docs` API documentation. This stable team alias points to the current production deployment. Production deployment URLs also open without a Vercel account.
 
-The older `medical-cost-app-jade.vercel.app` hostname timed out through its default edge addresses from the tested connection, even though the application worked through an alternative Vercel edge route. The team alias uses a reachable route and was verified with ordinary HTTPS, without credentials or DNS overrides. Deployment status alone is not a reachability test.
+The project-level Vercel Authentication setting is **Only Preview Deployments** (`ssoProtection.deploymentType: "preview"`). This is saved in Vercel project settings, independently of `vercel.json`, and applies to existing and future deployments. Preview deployments still require authorized Vercel access; production links remain public. Do not switch this setting to Standard Protection or All Deployments for this public demo: generated production links can then redirect visitors to Vercel login even when the main public alias works. See [Vercel's authentication API documentation](https://vercel.com/docs/deployment-protection/methods-to-protect-deployments/vercel-authentication).
 
-When changing deployment settings, preserve the alias-specific exception or intentionally replace it with a reviewed public domain. Check the public homepage, `/health`, `/predict`, `/sw.js`, and `/static/manifest.webmanifest` after releases. Do not distribute a preview URL that redirects visitors to Vercel authentication.
+On 30 October 2026, the generated production URL reproduced an HTTP 302 redirect to Vercel SSO under the previous `all_except_custom_domains` scope. After changing the project scope to `preview`, that same URL returned HTTP 200 without authentication, and the complete prediction smoke check passed. This fixes the access configuration for future production deployments as well as the current release; it does not depend on sharing a bypass token or granting visitors project access.
+
+The older `medical-cost-app-jade.vercel.app` hostname remains associated with the production project, but share the stable team alias above. Earlier network-specific connection timeouts occurred before TLS and are separate from the reproduced login redirect. Hosting settings cannot guarantee connectivity across every ISP.
+
+After releases, CI checks both the stable alias and the exact generated production URL published in GitHub deployment metadata. It uses no cookies or bypass headers and rejects redirects, including Vercel login redirects, before validating the homepage, matching assets, API and CSV predictions.
 
 ## Version 4 prediction tools
 

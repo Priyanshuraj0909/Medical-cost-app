@@ -282,7 +282,7 @@ Complete the [data-card template](docs/data-card.template.json) first. Follow [t
 
 ### Vercel
 
-The app is deployed at **[medical-cost-app-king-09.vercel.app](https://medical-cost-app-king-09.vercel.app)**. The connected GitHub repository deploys automatically when changes are pushed to `main`. After the test and browser jobs pass, a production smoke job verifies the public URL, deployed version, exact frontend assets, CSV workflow, and individual predictions. Run `python scripts/check_production.py --attempts 1` to check the same release locally.
+The app is deployed at **[medical-cost-app-king-09.vercel.app](https://medical-cost-app-king-09.vercel.app)**. The connected GitHub repository deploys automatically when changes are pushed to `main`. Production URLs are public; only preview deployments require a Vercel login. This project-level access policy persists across deployments. After the test and browser jobs pass, a production smoke job verifies both the stable public URL and the generated production link, rejects login redirects, and checks the deployed version, exact frontend assets, CSV workflow, and individual predictions. Run `python scripts/check_production.py --attempts 1` to check the same release locally.
 
 To deploy your own copy, import the repository into Vercel using the **FastAPI** preset. Alternatively, sign in and deploy with the CLI:
 
