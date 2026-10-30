@@ -1,0 +1,10 @@
+{
+  "id": "/", "name": "CareEstimate · Medical cost planner", "short_name": "CareEstimate",
+  "description": "Explore and compare educational medical cost estimates.",
+  "start_url": "/", "scope": "/", "display": "standalone", "lang": "en-IN",
+  "background_color": "#f6f8f5", "theme_color": "#265b46",
+  "icons": [
+    {"src": "/static/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "/static/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"}
+  ]
+}

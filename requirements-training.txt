@@ -1,0 +1,2 @@
+# Optional experiment tracking. Not installed in the deployed prediction service.
+mlflow-skinny==3.5.1

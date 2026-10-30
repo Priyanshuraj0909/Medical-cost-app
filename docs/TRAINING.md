@@ -62,3 +62,23 @@ Windows PowerShell: set `$env:CAREESTIMATE_MODEL_DIR = 'artifacts/candidate-001'
 The serving model loads once at startup. Promote by copying a reviewed model **and its matching metadata** into `model/` through a reviewed change, rerunning tests, and restarting/deploying. The offline command never does this for you. The bundled deployment needs no environment variables; generated `artifacts/` are intentionally excluded from hosting bundles.
 
 Intervals are withheld for requests outside recorded fitting ranges. Split-conformal intervals target marginal coverage under exchangeability; they do not guarantee individual or shifted-population coverage.
+
+## Optional MLflow experiment tracking
+
+Tracking is opt-in and never runs in the web prediction service. Install the lightweight client in your development environment:
+
+```bash
+pip install -r requirements-training.txt
+```
+
+Add an explicit tracking URI to the training command. For a local file store, use an absolute file URI in an ignored directory, for example:
+
+```bash
+python -m training.train --data data/medical_cost_prediction_dataset.csv \
+  --data-card data/data-card.json --output artifacts/candidate-002 \
+  --mlflow-tracking-uri file:///absolute/path/to/medical-cost-app/mlruns
+```
+
+The client logs seed, folds, dataset hash, synthetic status, baseline/CV/test metrics, interval coverage and the explicit candidate artifacts. It does not upload the source CSV. Diagnostic plots and metadata can still contain sensitive information; use only an authorized store. External servers are contacted only when you explicitly supply their URI. Failed tracking preserves the evaluated candidate files and exits with an error. The printed run ID identifies the experiment; the workflow does not promote or deploy a model.
+
+The optional `mlflow-skinny` client supports logging and local integration tests. A graphical tracking server/UI is a separate deployment or full MLflow installation; it is not bundled into this app. Local tests verify that a run and its artifacts can be read back from a temporary store. No production training run was performed because the original dataset is still absent.

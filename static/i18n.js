@@ -1,0 +1,120 @@
+'use strict';
+window.CareI18n = (() => {
+  const hi = {
+    'Skip to content': 'मुख्य सामग्री पर जाएँ', 'API documentation ↗': 'API दस्तावेज़ ↗',
+    'YOUR HEALTH. YOUR PLAN.': 'आपका स्वास्थ्य। आपकी योजना।', 'A clearer picture of': 'अपने चिकित्सा खर्च को',
+    'your medical costs.': 'बेहतर समझें।', 'Turn your health profile into an annual cost estimate.': 'अपनी स्वास्थ्य जानकारी से सालाना खर्च का अनुमान पाएँ।',
+    'Make room in your budget for what matters.': 'अपने बजट की योजना अधिक समझदारी से बनाएँ।',
+    '◈ Personalized estimate': '◈ व्यक्तिगत अनुमान', '◎ No account needed': '◎ खाते की ज़रूरत नहीं', '◌ Compare & export': '◌ तुलना और रिपोर्ट',
+    '01 / YOUR PROFILE': '01 / आपकी जानकारी', 'Let’s start with you': 'आपकी जानकारी से शुरू करें', 'Use an example': 'उदाहरण भरें',
+    'Personal': 'व्यक्तिगत', 'Health': 'स्वास्थ्य', 'Insurance': 'बीमा', 'Step {step} of 3': 'चरण {step} / 3',
+    'Show all fields': 'सभी फ़ील्ड दिखाएँ', 'Use guided steps': 'चरणों में भरें', 'Back': 'पीछे', 'Continue →': 'आगे बढ़ें →',
+    'Personal details': 'व्यक्तिगत जानकारी', 'Age': 'उम्र', 'years': 'वर्ष', 'Gender': 'लिंग', 'Female': 'महिला', 'Male': 'पुरुष',
+    'Height': 'लंबाई', 'cm': 'सेमी', 'Weight': 'वज़न', 'kg': 'किग्रा', 'Location': 'स्थान', 'Urban': 'शहरी', 'Semi-urban': 'अर्ध-शहरी', 'Rural': 'ग्रामीण',
+    'Smoking status': 'धूम्रपान की स्थिति', 'Non-smoker': 'धूम्रपान नहीं करते', 'Smoker': 'धूम्रपान करते हैं',
+    'Lifestyle & health': 'जीवनशैली और स्वास्थ्य', 'Physical activity': 'शारीरिक गतिविधि', 'Moderate': 'मध्यम', 'Low': 'कम', 'High': 'अधिक',
+    'Daily steps': 'रोज़ाना कदम', 'Sleep': 'नींद', 'Sleep hours': 'नींद के घंटे', 'hours / night': 'घंटे / रात', 'Stress': 'तनाव', 'Stress level': 'तनाव का स्तर',
+    'Select any existing conditions': 'पहले से मौजूद बीमारियाँ चुनें', 'Diabetes': 'मधुमेह', 'Hypertension': 'उच्च रक्तचाप', 'Heart disease': 'हृदय रोग', 'Asthma': 'अस्थमा',
+    'Care & insurance': 'देखभाल और बीमा', 'Doctor visits': 'डॉक्टर से मुलाकातें', 'last 12 months': 'पिछले 12 महीने', 'Hospital admissions': 'अस्पताल में भर्तियाँ',
+    'Current medications': 'वर्तमान दवाइयाँ', 'Medications': 'दवाइयाँ', 'Last year’s medical cost': 'पिछले वर्ष का चिकित्सा खर्च', 'Previous year’s cost': 'पिछले वर्ष का खर्च',
+    '₹ · INR display': '₹ · भारतीय रुपया प्रदर्शन', 'Insurance type': 'बीमा का प्रकार', 'Private': 'निजी', 'Government': 'सरकारी', 'No insurance': 'बीमा नहीं',
+    'Insurance coverage': 'बीमा कवरेज', 'Calculate my estimate': 'मेरा अनुमान निकालें', 'Calculate my estimate ↗': 'मेरा अनुमान निकालें ↗', 'Calculating…': 'गणना जारी है…',
+    'Profiles stay in this browser’s memory and are sent to the API for calculation. This app does not save them. Downloads are saved only when you choose.': 'जानकारी केवल ब्राउज़र की मेमोरी में रहती है और गणना के लिए API को भेजी जाती है। ऐप इसे सहेजता नहीं है। रिपोर्ट आपके चुनने पर ही डाउनलोड होती है।',
+    '02 / YOUR ESTIMATE': '02 / आपका अनुमान', 'Plan with a little': 'बेहतर समझ के साथ', 'more clarity.': 'योजना बनाएँ।',
+    'Complete your profile to see your estimated annual medical cost.': 'सालाना चिकित्सा खर्च का अनुमान देखने के लिए जानकारी भरें।',
+    'Monthly equivalent': 'मासिक समकक्ष', 'Keep for comparison': 'तुलना के लिए रखें', 'Download summary ↓': 'सारांश डाउनलोड करें ↓', 'Print / Save PDF': 'प्रिंट / PDF सहेजें',
+    'Clear comparison': 'तुलना हटाएँ', 'EXPLORE THE DIFFERENCE': 'अंतर समझें', 'Two profiles, side by side': 'दो प्रोफ़ाइल की तुलना',
+    'Kept estimate': 'रखा गया अनुमान', 'Current estimate': 'वर्तमान अनुमान',
+    'A model comparison shows associations. It does not predict the effect of changing your lifestyle or insurance.': 'मॉडल की तुलना केवल संबंध दिखाती है। यह जीवनशैली या बीमा बदलने का वास्तविक प्रभाव नहीं बताती।',
+    'UNDERSTAND YOUR ESTIMATE': 'अपना अनुमान समझें', 'What shaped this number?': 'इस अनुमान में किन कारकों का योगदान है?',
+    'The five largest model contributions. “Higher” and “lower” refer to the model’s average starting value.': 'मॉडल के पाँच सबसे बड़े योगदान। “अधिक” और “कम” मॉडल के औसत शुरुआती मान के सापेक्ष हैं।',
+    'These explain the model’s calculation. They are not causes or guaranteed savings.': 'ये मॉडल की गणना समझाते हैं। ये वास्तविक कारण या बचत की गारंटी नहीं हैं।',
+    'Check these profile details': 'इन जानकारियों की जाँच करें', 'About this demo': 'इस डेमो के बारे में',
+    'This model demonstrates medical cost estimation. It is not a bill or insurance quote.': 'यह मॉडल चिकित्सा खर्च के अनुमान का डेमो है। यह बिल या बीमा प्रस्ताव नहीं है।',
+    'Dataset details & model limits': 'डेटासेट की जानकारी और मॉडल की सीमाएँ',
+    'Care counts refer to the preceding 12 months. The original dataset’s feature timing is unverified, so next-year forecasting performance is not established.': 'देखभाल की संख्या पिछले 12 महीनों के लिए है। मूल डेटासेट में समय अवधि की पुष्टि नहीं हुई है, इसलिए अगले वर्ष के पूर्वानुमान की गुणवत्ता स्थापित नहीं है।',
+    'View model information ↗': 'मॉडल की जानकारी देखें ↗', 'Explore the prediction API': 'अनुमान API देखें', 'Built for a more informed tomorrow.': 'बेहतर जानकारी, बेहतर योजना।',
+    'Ready for a fresh estimate': 'नए अनुमान के लिए तैयार', 'Calculate again to use your current details.': 'वर्तमान जानकारी के साथ फिर गणना करें।',
+    'A comparison is kept. Change your profile and calculate again.': 'तुलना के लिए एक अनुमान रखा गया है। जानकारी बदलें और फिर गणना करें।',
+    'Your annual cost estimate': 'आपका सालाना खर्च अनुमान', 'Based on the profile you provided. Review the model’s limits below.': 'आपकी दी गई जानकारी के आधार पर। नीचे मॉडल की सीमाएँ पढ़ें।',
+    'estimated annual cost · Indian rupees (INR display)': 'अनुमानित सालाना खर्च · भारतीय रुपये (INR प्रदर्शन)',
+    'Model starting value: {amount}.': 'मॉडल का शुरुआती मान: {amount}।', 'Higher {amount}': 'अधिक {amount}', 'Lower {amount}': 'कम {amount}',
+    'BMI': 'बीएमआई', 'Semi-urban location': 'अर्ध-शहरी स्थान', 'Urban location': 'शहरी स्थान', 'Out-of-pocket fraction': 'खुद चुकाए जाने वाला हिस्सा',
+    'The annual estimates are equal.': 'दोनों सालाना अनुमान बराबर हैं।', '{amount} higher per year (INR display).': 'सालाना {amount} अधिक (INR प्रदर्शन)।',
+    '{amount} lower per year (INR display).': 'सालाना {amount} कम (INR प्रदर्शन)।', 'Both profiles use the same inputs.': 'दोनों प्रोफ़ाइल की जानकारी समान है।',
+    'Kept estimate: {amount}. Change the form and calculate to compare.': 'रखा गया अनुमान: {amount}। तुलना के लिए जानकारी बदलकर गणना करें।',
+    'The model or currency changed. Clear the kept estimate before comparing.': 'मॉडल या मुद्रा बदल गई है। तुलना से पहले रखा गया अनुमान हटाएँ।',
+    'The model changed. Recalculate your main estimate before exploring a scenario.': 'मॉडल बदल गया है। नई स्थिति की तुलना से पहले मुख्य अनुमान फिर निकालें।',
+    'A calibrated prediction interval is unavailable for this model. The estimate does not express certainty.': 'इस मॉडल के लिए सत्यापित अनुमान-अंतराल उपलब्ध नहीं है। यह अनुमान निश्चित खर्च नहीं बताता।',
+    'Prediction interval withheld because this profile is outside recorded training ranges.': 'प्रोफ़ाइल रिकॉर्ड की गई सीमा से बाहर है, इसलिए अनुमान-अंतराल नहीं दिखाया गया है।',
+    'Coverage was measured on held-out data; individual and shifted-population coverage is not guaranteed.': 'कवरेज अलग रखे गए परीक्षण डेटा पर मापा गया था; हर व्यक्ति या नई जनसंख्या में कवरेज की गारंटी नहीं है।',
+    'INR display for this demo; no currency conversion is applied. Original currency and total versus out-of-pocket cost definition are not documented.': 'इस डेमो में INR प्रदर्शन है; मुद्रा रूपांतरण नहीं किया गया। मूल मुद्रा और कुल खर्च बनाम खुद चुकाए खर्च की परिभाषा दर्ज नहीं है।',
+    'INR display for this demo; no currency conversion is applied. Original training currency is not documented.': 'इस डेमो में INR प्रदर्शन है; मुद्रा रूपांतरण नहीं किया गया। मूल प्रशिक्षण मुद्रा दर्ज नहीं है।',
+    'Demo estimate. Total versus out-of-pocket cost definition is not documented.': 'डेमो अनुमान। कुल खर्च बनाम खुद चुकाए खर्च की परिभाषा दर्ज नहीं है।',
+    'Demo estimate. The original dataset source is not documented.': 'डेमो अनुमान। मूल डेटासेट स्रोत दर्ज नहीं है।',
+    'Model estimate. See dataset details for its scope and limitations.': 'मॉडल अनुमान। उपयोग-क्षेत्र और सीमाएँ डेटासेट विवरण में पढ़ें।',
+    'For adults aged 18–89. Amounts use Indian rupee formatting for this demo; no currency conversion is applied.': '18–89 वर्ष के वयस्कों के लिए। इस डेमो में भारतीय रुपये का प्रारूप है; मुद्रा रूपांतरण नहीं किया गया है।',
+    'Amounts are displayed as Indian rupees for this demo without exchange-rate conversion. This display choice does not establish the training dataset’s currency.': 'इस डेमो में बिना विनिमय-दर रूपांतरण के भारतीय रुपये दिखाए जाते हैं। इससे प्रशिक्षण डेटासेट की मुद्रा की पुष्टि नहीं होती।',
+    'Currency is not specified; amounts are shown in dataset units.': 'मूल मुद्रा निर्दिष्ट नहीं है; मॉडल की संख्याएँ डेटासेट की इकाइयों में हैं।',
+    'The original dataset source is not recorded.': 'मूल डेटासेट स्रोत दर्ज नहीं है।',
+    'Whether costs mean total spending or patient out-of-pocket spending is not established.': 'खर्च का अर्थ कुल व्यय है या रोगी द्वारा खुद चुकाया गया व्यय, यह स्थापित नहीं है।',
+    'Model information is unavailable. See the project documentation for known limitations.': 'मॉडल की जानकारी उपलब्ध नहीं है। सीमाओं के लिए परियोजना के दस्तावेज़ देखें।',
+    'Model {version}. {status}': 'मॉडल {version}। {status}',
+    'Historical notebook outputs only; original data unavailable for independent reproduction.': 'केवल पुरानी नोटबुक के परिणाम उपलब्ध हैं; स्वतंत्र पुनरुत्पादन के लिए मूल डेटा उपलब्ध नहीं है।',
+    'EXPLORE A SCENARIO': 'एक स्थिति की तुलना करें', 'What if your profile were different?': 'अगर आपकी जानकारी अलग होती तो?', 'Model exploration': 'मॉडल को समझें',
+    'Change one input while keeping the rest of your calculated profile fixed. This compares model estimates, not guaranteed savings or treatment effects.': 'बाकी जानकारी समान रखकर एक मान बदलें। यह मॉडल अनुमानों की तुलना है, बचत या इलाज के प्रभाव की गारंटी नहीं।',
+    'Change a factor': 'एक कारक बदलें', 'Scenario value': 'नई स्थिति का मान', 'Compare scenario': 'स्थिति की तुलना करें',
+    'Calculate a scenario to compare it with your current estimate.': 'वर्तमान अनुमान से तुलना करने के लिए नई स्थिति की गणना करें।', 'Scenario estimate': 'नई स्थिति का अनुमान',
+    'Scenario ready: {field} = {value}.': 'स्थिति तैयार: {field} = {value}।',
+    'Your current form was not changed.': 'आपके वर्तमान फ़ॉर्म में बदलाव नहीं किया गया है।',
+    'Estimate unavailable': 'अनुमान उपलब्ध नहीं', 'Check your details and try again.': 'जानकारी जाँचकर फिर कोशिश करें।',
+    'The request took too long. Please try again.': 'अनुरोध में अधिक समय लगा। फिर कोशिश करें।',
+    'Could not connect to the prediction service. Please try again.': 'अनुमान सेवा से संपर्क नहीं हुआ। फिर कोशिश करें।',
+    'Unable to calculate your estimate. Please try again.': 'अनुमान की गणना नहीं हो सकी। फिर कोशिश करें।',
+    'Unable to calculate an estimate. Please try again.': 'अनुमान की गणना नहीं हो सकी। फिर कोशिश करें।',
+    'Prediction service is unavailable': 'अनुमान सेवा उपलब्ध नहीं है', 'The service returned an invalid estimate.': 'सेवा ने अमान्य अनुमान लौटाया।',
+    'Please enter a valid value.': 'कृपया सही मान भरें।', 'Please enter a value.': 'कृपया मान भरें।',
+    'Value must be at least {value}.': 'मान कम से कम {value} होना चाहिए।', 'Value must be no more than {value}.': 'मान अधिकतम {value} होना चाहिए।',
+    'Please enter a whole number.': 'कृपया पूर्ण संख्या भरें।', 'Please review the highlighted fields.': 'कृपया चिह्नित फ़ील्ड जाँचें।',
+    '{field} is outside the recorded training range; this estimate may be unreliable.': '{field} रिकॉर्ड की गई प्रशिक्षण सीमा से बाहर है; यह अनुमान अविश्वसनीय हो सकता है।',
+    'Offline: the interface is available, but predictions need an internet connection.': 'आप ऑफ़लाइन हैं: इंटरफ़ेस उपलब्ध है, लेकिन अनुमान के लिए इंटरनेट चाहिए।',
+    'Install app': 'ऐप इंस्टॉल करें', 'Estimate report': 'अनुमान रिपोर्ट', 'Generated: {date}': 'बनाने का समय: {date}',
+    'No insurance requires zero insurance coverage': 'बीमा नहीं होने पर बीमा कवरेज शून्य होना चाहिए',
+    'Switch color theme': 'रंग थीम बदलें', 'Profile steps': 'प्रोफ़ाइल के चरण',
+    'Annual cost comparison chart': 'सालाना खर्च की तुलना का चार्ट',
+    'Largest model feature contributions': 'मॉडल के सबसे बड़े कारक योगदान',
+    'Current and scenario annual estimates': 'वर्तमान और नई स्थिति के सालाना अनुमान',
+    'Model version: {version}': 'मॉडल संस्करण: {version}', 'Annual estimate': 'सालाना अनुमान', 'Leading model factors': 'मॉडल के प्रमुख कारक',
+    'Model limitations': 'मॉडल की सीमाएँ', 'Comparison': 'तुलना', 'Scenario comparison': 'नई स्थिति की तुलना',
+    'Educational model estimate, not a bill or insurance quote. Monthly equivalent is annual cost divided by twelve. Raw profile inputs are omitted from this file.': 'यह शैक्षिक मॉडल अनुमान है, बिल या बीमा प्रस्ताव नहीं। मासिक समकक्ष सालाना अनुमान को बारह से भाग देकर मिलता है। इस फ़ाइल में कच्ची प्रोफ़ाइल जानकारी नहीं है।',
+    '{coverage}% prediction interval: {lower}–{upper}. Measured test coverage: {measured}%.': '{coverage}% अनुमान-अंतराल: {lower}–{upper}। मापा गया परीक्षण कवरेज: {measured}%।',
+  };
+  let language = 'en';
+  try { language = localStorage.getItem('careestimate-language') === 'hi' ? 'hi' : 'en'; } catch { /* Preferences are optional. */ }
+  const staticNodes = [];
+  const staticLabels = [...document.querySelectorAll('[aria-label]')].map(node => [node, node.getAttribute('aria-label')]);
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  while (walker.nextNode()) {
+    const node = walker.currentNode;
+    if (!['SCRIPT', 'STYLE'].includes(node.parentElement?.tagName) && node.textContent.trim()) staticNodes.push([node, node.textContent]);
+  }
+  const t = (key, values = {}) => {
+    let value = language === 'hi' ? hi[key] || key : key;
+    for (const [name, replacement] of Object.entries(values)) value = value.replaceAll(`{${name}}`, String(replacement));
+    return value;
+  };
+  function apply() {
+    document.documentElement.lang = language === 'hi' ? 'hi-IN' : 'en-IN';
+    for (const [node, original] of staticNodes) {
+      if (node.isConnected) node.textContent = original.replace(original.trim(), t(original.trim()));
+    }
+    for (const [node, original] of staticLabels) node.setAttribute('aria-label', t(original));
+    document.getElementById('language').value = language;
+  }
+  function setLanguage(value) {
+    language = value === 'hi' ? 'hi' : 'en';
+    try { localStorage.setItem('careestimate-language', language); } catch { /* Profiles are never stored. */ }
+    apply();
+  }
+  return { t, apply, setLanguage, get language() { return language; } };
+})();

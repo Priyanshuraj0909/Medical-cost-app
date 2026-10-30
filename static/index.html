@@ -1,16 +1,18 @@
 <!doctype html>
 <html lang="en-IN">
-<head><meta charset="utf-8"><meta name="description" content="Explore annual medical cost estimates, understand model factors, and compare profiles with CareEstimate."><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/static/favicon.svg" type="image/svg+xml"><title>CareEstimate · Medical cost planner</title><link rel="stylesheet" href="/static/style.css"><script src="/static/app.js" defer></script></head>
+<head><meta charset="utf-8"><meta name="description" content="Explore annual medical cost estimates, understand model factors, and compare profiles with CareEstimate."><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#265b46"><link rel="manifest" href="/static/manifest.webmanifest"><link rel="icon" href="/static/favicon.svg" type="image/svg+xml"><title>CareEstimate · Medical cost planner</title><link rel="stylesheet" href="/static/style.css"><script src="/static/vendor/chart.umd.min.js" defer></script><script src="/static/i18n.js" defer></script><script src="/static/charts.js" defer></script><script src="/static/app.js" defer></script></head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
-<header><a class="brand" href="/"><span class="mark">✚</span> CareEstimate</a><a href="/docs">API documentation ↗</a></header>
-<main id="main">
+<header><a class="brand" href="/"><span class="mark">✚</span> CareEstimate</a><div class="header-actions"><label class="language-label" for="language">Language / भाषा</label><select id="language" aria-label="Language / भाषा"><option value="en">English</option><option value="hi">हिन्दी</option></select><button class="icon-button" id="theme" type="button" aria-label="Switch color theme" aria-pressed="false">◐</button><button class="secondary" id="install" type="button" hidden>Install app</button><a href="/docs">API documentation ↗</a></div></header>
+<main id="main"><p id="connection-note" class="offline-note" role="status" hidden>Offline: the interface is available, but predictions need an internet connection.</p>
 <section class="intro"><span class="eyebrow">YOUR HEALTH. YOUR PLAN.</span><h1>A clearer picture of<br>your medical costs.</h1><p>Turn your health profile into an annual cost estimate.<br>Make room in your budget for what matters.</p><div class="tags"><span>◈ Personalized estimate</span><span>◎ No account needed</span><span>◌ Compare & export</span></div></section>
 <div class="workspace">
-<form id="estimate-form" aria-describedby="scope-note">
+<form id="estimate-form" aria-describedby="scope-note" novalidate>
 <div class="form-heading"><div><span class="eyebrow">01 / YOUR PROFILE</span><h2>Let’s start with you</h2></div><button class="text-button" id="example" type="button">Use an example</button></div>
 <p class="form-note" id="scope-note">For adults aged 18–89. Amounts use Indian rupee formatting for this demo; no currency conversion is applied.</p>
-<fieldset><legend>Personal details</legend><div class="fields">
+<nav class="step-nav" aria-label="Profile steps"><ol><li><button type="button" data-step="0" aria-current="step"><span>01</span> Personal</button></li><li><button type="button" data-step="1"><span>02</span> Health</button></li><li><button type="button" data-step="2"><span>03</span> Insurance</button></li></ol></nav>
+<div class="step-summary"><p id="step-status" role="status">Step 1 of 3</p><button id="view-all" class="text-button" type="button">Show all fields</button></div>
+<fieldset data-form-step="0"><legend>Personal details</legend><div class="fields">
 <label>Age <span>years</span><input name="age" type="number" min="18" max="89" value="35" required></label>
 <label>Gender<select name="gender_raw"><option value="female">Female</option><option value="male">Male</option></select></label>
 <label>Height <span>cm</span><input name="height_cm" type="number" min="1" max="300" step="any" value="165" required></label>
@@ -18,13 +20,13 @@
 <label>Location<select name="city"><option value="urban">Urban</option><option value="semi-urban">Semi-urban</option><option value="rural">Rural</option></select></label>
 <label>Smoking status<select name="smoker_raw"><option value="no">Non-smoker</option><option value="yes">Smoker</option></select></label>
 </div></fieldset>
-<fieldset><legend>Lifestyle & health</legend><div class="fields">
+<fieldset data-form-step="1" hidden><legend>Lifestyle & health</legend><div class="fields">
 <label>Physical activity<select name="physical_activity_level_raw"><option value="medium">Moderate</option><option value="low">Low</option><option value="high">High</option></select></label>
 <label>Daily steps<input name="daily_steps" type="number" min="0" max="100000" value="7000" required></label>
 <label>Sleep <span>hours / night</span><input name="sleep_hours" type="number" min="0" max="24" step="any" value="7" required></label>
 <label>Stress <span>1–10</span><input name="stress_level" type="number" min="1" max="10" value="4" required></label>
 </div><p class="field-note">Select any existing conditions</p><div class="conditions"><label><input type="checkbox" name="diabetes"> Diabetes</label><label><input type="checkbox" name="hypertension"> Hypertension</label><label><input type="checkbox" name="heart_disease"> Heart disease</label><label><input type="checkbox" name="asthma"> Asthma</label></div></fieldset>
-<fieldset><legend>Care & insurance</legend><div class="fields">
+<fieldset data-form-step="2" hidden><legend>Care & insurance</legend><div class="fields">
 <label>Doctor visits <span>last 12 months</span><input name="doctor_visits_per_year" type="number" min="0" value="3" required></label>
 <label>Hospital admissions <span>last 12 months</span><input name="hospital_admissions" type="number" min="0" value="0" required></label>
 <label>Current medications<input name="medication_count" type="number" min="0" value="0" required></label>
@@ -32,7 +34,7 @@
 <label>Insurance type<select name="insurance_type_raw" id="insurance-type"><option value="private">Private</option><option value="government">Government</option><option value="no_insurance">No insurance</option></select></label>
 <label>Insurance coverage <span>%</span><input id="coverage-percent" name="coverage_percent" type="number" min="0" max="100" step="any" value="80" required></label>
 </div></fieldset>
-<p id="error" role="alert" hidden></p><button class="primary" id="submit" type="submit">Calculate my estimate <span>↗</span></button><p class="privacy">Profiles stay in this browser’s memory and are sent to the API for calculation. This app does not save them. Downloads are saved only when you choose.</p>
+<p id="error" role="alert" hidden></p><div class="wizard-actions"><button class="secondary" id="previous" type="button" hidden>Back</button><button class="primary" id="next" type="button">Continue →</button></div><button class="primary" id="submit" type="submit" hidden>Calculate my estimate <span>↗</span></button><p class="privacy">Profiles stay in this browser’s memory and are sent to the API for calculation. This app does not save them. Downloads are saved only when you choose.</p>
 </form>
 <aside>
 <section class="result-card" aria-labelledby="result-heading">
@@ -43,20 +45,29 @@
 <p class="dataset-note" id="dataset-note"></p>
 <div class="monthly"><span>Monthly equivalent</span><strong id="monthly"></strong></div>
 <p class="interval" id="interval"></p><p class="uncertainty" id="uncertainty"></p>
-<div class="result-actions"><button id="pin" type="button" class="secondary">Keep for comparison</button><button id="download" type="button" class="secondary">Download summary ↓</button></div>
+<div class="result-actions"><button id="pin" type="button" class="secondary">Keep for comparison</button><button id="download" type="button" class="secondary">Download summary ↓</button><button id="print" type="button" class="secondary">Print / Save PDF</button></div>
 </div>
 <div class="result-footer"><span class="dot"></span><span id="model-version">Powered by LightGBM</span></div>
 </section>
 <section id="baseline-status" class="notice" hidden><p id="baseline-message"></p><button id="clear-baseline" class="text-button" type="button">Clear comparison</button></section>
 <section id="comparison" class="detail-card" hidden aria-labelledby="comparison-heading"><span class="eyebrow">EXPLORE THE DIFFERENCE</span><h3 id="comparison-heading">Two profiles, side by side</h3>
 <table><caption class="sr-only">Annual cost comparison displayed in Indian rupees</caption><thead><tr><th scope="col">Kept estimate</th><th scope="col">Current estimate</th></tr></thead><tbody><tr><td id="baseline-amount"></td><td id="current-amount"></td></tr></tbody></table>
-<p id="difference"></p><ul id="changed-fields"></ul><p class="small">A model comparison shows associations. It does not predict the effect of changing your lifestyle or insurance.</p></section>
-<section id="explanation" class="detail-card" hidden aria-labelledby="explanation-heading"><span class="eyebrow">UNDERSTAND YOUR ESTIMATE</span><h3 id="explanation-heading">What shaped this number?</h3><p class="small">The five largest model contributions. “Higher” and “lower” refer to the model’s average starting value.</p><p id="base-value" class="small"></p><ol id="factors" class="factors"></ol><p class="small">These explain the model’s calculation. They are not causes or guaranteed savings.</p></section>
+<div class="chart-frame comparison-chart"><canvas id="comparison-chart" role="img" aria-label="Annual cost comparison chart"></canvas></div><p id="difference"></p><ul id="changed-fields"></ul><p class="small">A model comparison shows associations. It does not predict the effect of changing your lifestyle or insurance.</p></section>
+
 <section id="warnings" class="notice" hidden aria-labelledby="warnings-heading"><h3 id="warnings-heading">Check these profile details</h3><ul id="warning-list"></ul></section>
 <section class="help"><h3>About this demo</h3><p>This model demonstrates medical cost estimation. It is not a bill or insurance quote.</p>
 <details id="model-details"><summary>Dataset details & model limits</summary><ul id="dataset-details"><li>Currency, original source and total versus out-of-pocket cost definition are not documented.</li></ul><p>Care counts refer to the preceding 12 months. The original dataset’s feature timing is unverified, so next-year forecasting performance is not established.</p><p id="model-status">Loading model information…</p><a href="/model-info">View model information ↗</a></details></section>
 <a class="api-link" href="/docs">Explore the prediction API <span>↗</span></a>
 </aside>
 </div>
+<div id="insights" class="insights-grid" hidden>
+<section id="explanation" class="detail-card" hidden aria-labelledby="explanation-heading"><span class="eyebrow">UNDERSTAND YOUR ESTIMATE</span><h3 id="explanation-heading">What shaped this number?</h3><p class="small">The five largest model contributions. “Higher” and “lower” refer to the model’s average starting value.</p><p id="base-value" class="small"></p><div class="chart-frame"><canvas id="contribution-chart" role="img" aria-label="Largest model feature contributions"></canvas></div><ol id="factors" class="factors"></ol><p class="small">These explain the model’s calculation. They are not causes or guaranteed savings.</p></section>
+<section id="scenario-panel" class="scenario-panel detail-card" hidden aria-labelledby="scenario-heading">
+<div class="scenario-heading"><div><span class="eyebrow">EXPLORE A SCENARIO</span><h2 id="scenario-heading">What if your profile were different?</h2></div><span class="pill">Model exploration</span></div>
+<p class="small">Change one input while keeping the rest of your calculated profile fixed. This compares model estimates, not guaranteed savings or treatment effects.</p>
+<div class="scenario-grid"><div><label for="scenario-feature">Change a factor</label><select id="scenario-feature"><option value="hospital_admissions">Hospital admissions</option><option value="insurance_coverage_frac">Insurance coverage</option><option value="doctor_visits_per_year">Doctor visits</option><option value="daily_steps">Daily steps</option></select><label class="range-label" for="scenario-value">Scenario value <output id="scenario-value-label" for="scenario-value"></output></label><input id="scenario-value" type="range" min="0" max="6" step="1" value="1"><button id="scenario-calculate" class="primary" type="button">Compare scenario</button><p id="scenario-error" role="alert" hidden></p></div>
+<div><p id="scenario-summary" role="status">Calculate a scenario to compare it with your current estimate.</p><div id="scenario-result" hidden><div class="chart-frame"><canvas id="scenario-chart" role="img" aria-label="Current and scenario annual estimates"></canvas></div><table><caption class="sr-only">Scenario estimate comparison</caption><thead><tr><th scope="col">Current estimate</th><th scope="col">Scenario estimate</th></tr></thead><tbody><tr><td id="scenario-current"></td><td id="scenario-amount"></td></tr></tbody></table><p id="scenario-difference"></p><ul id="scenario-warnings"></ul></div></div></div>
+</section>
+</div>
 <footer>CareEstimate <span>Built for a more informed tomorrow.</span></footer>
-</main></body></html>
+</main><section id="print-report" aria-label="Estimate report" hidden></section></body></html>

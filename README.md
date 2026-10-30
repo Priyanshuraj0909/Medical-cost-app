@@ -30,9 +30,12 @@ The project provides both a browser experience for exploring costs and a documen
 
 ### Key Features
 
+- **Guided, bilingual experience:** Three validated steps, a show-all option, English/Hindi switching, local Hindi fonts, and light/dark themes.
+- **Interactive exploration:** Chart.js contribution and comparison charts, plus a scenario slider that changes one input without modifying the main profile.
 - **Explained estimates:** Annual predictions, monthly equivalents, five leading feature contributions, and explicit uncertainty status.
-- **Compare and export:** Keep one estimate, change a profile, compare the results, and download a JSON summary without raw profile inputs. Comparisons stay in browser memory.
+- **Compare and export:** Keep one estimate, change a profile, compare the results, and download a JSON summary or print a report to save as PDF without raw profile inputs. Comparisons stay in browser memory.
 - **Validated prediction API:** Shared training/serving preprocessing, age scope checks, insurance consistency validation, out-of-range warnings, and model checksum/feature-order verification.
+- **Installable app:** A PWA manifest and public-shell service worker let the interface open offline. Predictions require a connection; profiles and API responses are never cached by the service worker.
 - **Evaluation and operations:** Offline baseline comparisons, grouped cross-validation, calibration/test splits, subgroup error reports, diagnostic plots, and process-local aggregate metrics.
 - **Deployment and verification:** Vercel configuration, Docker packaging, a Render Blueprint, API/training tests, and desktop/mobile browser and accessibility checks.
 
@@ -40,9 +43,9 @@ The project provides both a browser experience for exploring costs and a documen
 
 | Layer | Technologies |
 | --- | --- |
-| Web interface | HTML5, CSS3, JavaScript |
+| Web interface | HTML5, CSS3, JavaScript, Chart.js, English/Hindi, PWA |
 | API | Python, FastAPI, Uvicorn, Pydantic |
-| Model and numerical processing | LightGBM, scikit-learn, NumPy, pandas, SciPy |
+| Model and numerical processing | LightGBM, scikit-learn, NumPy, pandas, SciPy; optional MLflow tracking |
 | Testing and CI | pytest, HTTPX, Playwright, axe-core, GitHub Actions |
 | Hosting and packaging | Vercel, Docker, Render configuration |
 
@@ -133,15 +136,24 @@ The image runs as a non-root user, includes OpenMP, and checks `/health`. Its in
 ### Web Interface
 
 1. Open the [live app](https://medical-cost-app-jade.vercel.app) or your local instance.
-2. Enter your personal details, lifestyle, existing conditions, care history, and insurance coverage.
+2. Complete **Personal → Health → Insurance** using **Continue** and **Back**. Invalid fields show inline guidance. **Show all fields** opens the complete form.
 3. Select **Calculate my estimate** to view the annual prediction and monthly equivalent.
 4. Read the leading model factors, uncertainty note, and any range warnings.
 5. Select **Keep for comparison**, change inputs, then calculate again to compare profiles.
-6. Select **Download summary** to export results and explanations as JSON. **Clear comparison** removes the kept estimate.
+6. Explore the scenario panel to change one factor and compare an alternate estimate without editing your main profile.
+7. Select **Download summary** for JSON, or **Print / Save PDF** for a browser-generated report. **Clear comparison** removes the kept estimate.
+8. Use the header to switch English/Hindi or light/dark mode. Where supported, **Install app** adds the app to your device.
 
 **Use an example** restores the sample profile. The interface uses preceding-12-month care counts; the legacy dataset’s timing remains unverified. Model associations do not establish causal effects or guaranteed savings.
 
-![CareEstimate interface showing a sample profile, estimate and model explanations](docs/images/careestimate.png)
+![CareEstimate guided form, INR estimate, contribution chart and scenario explorer](docs/images/careestimate.png)
+
+<details>
+<summary>Hindi and dark mode preview</summary>
+
+![CareEstimate in Hindi with dark theme](docs/images/careestimate-hindi.png)
+
+</details>
 
 ### API Endpoints
 
@@ -224,7 +236,7 @@ python -m pytest -q
 
 The Python suite covers actual model inference, feature parity, explanation reconciliation, validation, privacy of aggregate metrics, interval handling, bundle integrity, and an end-to-end offline training run on an explicitly synthetic test fixture. Fixture results are not production accuracy measurements.
 
-Browser checks need Node.js 22 or newer:
+Optional experiment-tracking integration tests require `pip install -r requirements-training.txt`. Without this extra, the MLflow test is skipped. Browser checks need Node.js 22 or newer:
 
 ```bash
 npm ci
@@ -232,7 +244,7 @@ npx playwright install chromium
 PYTHON_BIN=.venv/bin/python npm run test:browser
 ```
 
-GitHub Actions also tests real browser flows and accessibility, builds Docker, and checks container readiness. See [operations and browser testing](docs/OPERATIONS.md) for installed-Chrome and Windows options.
+GitHub Actions also tests guided validation, scenarios, charts, PDF printing, Hindi/dark mode, offline behavior and accessibility; it builds Docker and checks container readiness. See [operations and browser testing](docs/OPERATIONS.md) for installed-Chrome and Windows options.
 
 ## Reproducible Training
 
@@ -277,17 +289,19 @@ A `render.yaml` Blueprint is included for Docker-based hosting. Connect your rep
 medical-cost-app/
 ├── app.py                       # API routes, startup, model inference
 ├── schema/                      # Shared validation and feature encoding
-├── training/                    # Offline training, baselines and evaluation
+├── training/                    # Offline evaluation and optional MLflow tracking
+├── scripts/                     # Reproducible local inference benchmark
 ├── docs/                        # Data card, training and operations guides
 ├── model_bundle.py              # Trusted bundle integrity checks
 ├── monitoring.py                # Aggregate process-local metrics
 ├── model/                       # Original trained LightGBM model
-├── static/                      # Web interface and assets
+├── static/                      # Guided UI, translations, charts, fonts, PWA shell
 ├── tests/                       # API, offline training and browser tests
 ├── package.json                 # Development-only browser test dependencies
 ├── .github/workflows/ci.yml     # Automated tests and Docker checks
 ├── requirements.txt             # Runtime dependencies
-├── requirements-dev.txt         # Development dependencies
+├── requirements-dev.txt         # API/test dependencies
+├── requirements-training.txt    # Optional offline MLflow client
 ├── .python-version              # Vercel Python version
 ├── vercel.json                  # Vercel configuration
 ├── vercel_build.py              # OpenMP bundling for Vercel
@@ -305,6 +319,9 @@ Implemented in this release:
 - [x] Feature contributions, range warnings, and explicit uncertainty handling.
 - [x] Profile comparisons and downloadable summaries.
 - [x] Automated browser/accessibility checks and aggregate service metrics.
+- [x] Guided form, scenario charts, English/Hindi, dark mode and printable reports.
+- [x] Installable app shell with offline interface and no profile caching.
+- [x] Single-pass inference, latency histogram and optional MLflow experiment tracking.
 
 Remaining work that requires original source data:
 
@@ -329,7 +346,7 @@ Keep request schemas, feature mappings, and model feature order consistent. Chan
 
 The original training dataset is not included. Its provenance, currency, intended population, and predictive performance on new users have not been verified. The training notebook and serialized model are provided for exploration and development.
 
-The application does not save submitted profiles or log request bodies. Comparisons live in browser memory; users explicitly choose whether to download summaries. Process-local metrics contain counters, not profiles, and reset on restart. Hosting-provider logging policies are outside this application. Only load pickle bundles from trusted sources. See [operations](docs/OPERATIONS.md).
+The application does not save submitted profiles or log request bodies. Comparisons and scenarios live in browser memory; users explicitly choose whether to download or print summaries. Only language/theme preferences are saved in localStorage. The service worker caches public interface files, never profiles or API responses. Process-local metrics contain counters, not profiles, and reset on restart. Hosting-provider logging policies are outside this application. Only load pickle bundles from trusted sources. See [operations](docs/OPERATIONS.md).
 
 > [!IMPORTANT]
 > Predictions are estimates, not bills or insurance quotes. Confirm policy coverage and local care prices before using them to plan spending.

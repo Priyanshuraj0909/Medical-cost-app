@@ -42,3 +42,27 @@ Missing documentation is shown as a neutral demo note next to the estimate, with
 ## Indian rupee display
 
 The web interface formats cost inputs, estimates, monthly equivalents, contributions, prediction intervals and comparisons using Indian rupee labels and `Intl.NumberFormat('en-IN', {style: 'currency', currency: 'INR'})`. The original model values are not converted or rescaled. Dataset documentation remains unchanged: this is an explicit demo display convention, not evidence the model was trained on Indian costs. Downloaded summaries include `display_currency` with `currency: INR`, `locale: en-IN`, `conversion_applied: false` and an explanatory note. API currency still describes training units, independently of browser presentation.
+
+## Version 3 interface and installation
+
+The frontend uses three validated steps with a show-all option. English and Hindi cover the form, result, model-limit notes, chart labels, scenarios, report text and key errors. API JSON remains machine-readable English. Native browser validation and print-dialog language depend on the browser. Hindi fonts and Chart.js are served locally with their license notices; there are no CDN/font requests.
+
+A language and theme preference are stored under `careestimate-language` and `careestimate-theme`. Profiles, estimates and scenario results stay in memory. Editing the form invalidates results and clears any generated report. A scenario clones the last calculated profile and updates only the selected factor; it never writes into the form. Comparisons across different model versions/currencies are rejected. These are associations, not interventions or guaranteed savings.
+
+**Print / Save PDF** opens the browser print dialog with a purpose-built A4 report. Choose the browser's Save as PDF destination. The report includes the estimate, available intervals, model version, optional comparisons/scenario, leading contributions and limitations. Raw form inputs are omitted. No server-side PDF service or automatic file upload is used.
+
+The install button appears when the browser offers installation. Browser installation support varies; users may also use the browser's install/add-to-home-screen menu. `/sw.js` owns only a fixed public-shell allowlist and uses network-first caching. Its cache version is `careestimate-shell-v3`; bump it when intentionally changing the shell cache contract. It never intercepts `POST`, `/predict`, `/model-info`, `/metrics` or `/health`. Offline startup shows the cached interface and an offline notice, and requires a connection for fresh predictions. It never queues health profiles for later upload. Offline reload starts with the static example form, not the previous user's profile.
+
+## Inference and latency metrics
+
+LightGBM's contribution vector includes the base value and sums to its raw regression prediction. Version 3 derives the point estimate from that vector in one call rather than traversing the model twice. Regression tests compare this path with normal predictions for several example profiles. The saved model is unchanged.
+
+`careestimate_prediction_duration_seconds` is now a Prometheus histogram, with `_bucket`, `_count` and the existing `_sum`. It counts successful inference only and remains process-local. Use a scraper to calculate percentile latency; these counters do not measure Vercel cold starts or network time.
+
+Run a repeatable local benchmark:
+
+```bash
+python scripts/benchmark_inference.py --iterations 300
+```
+
+A local macOS arm64 run with 150 iterations per path measured median **1.389 ms** for two calls versus **1.342 ms** for one, with p95 **1.534 ms** versus **1.439 ms**. Loading the bundle took about **0.998 s**. These are warmed microbenchmarks on one synthetic example profile, not hosted performance guarantees or model-quality results. Re-run on the deployment environment before making performance claims.

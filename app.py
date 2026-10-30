@@ -18,7 +18,7 @@ from schema.output import PredictionResponse
 from schema.user_input import UserRequest, MODEL_FEATURES
 
 BASE_DIR = Path(__file__).resolve().parent
-APP_VERSION = "2.1.0"
+APP_VERSION = "3.0.0"
 logger = logging.getLogger(__name__)
 
 
@@ -47,7 +47,7 @@ async def response_headers(request: Request, call_next):
     response.headers["Referrer-Policy"] = "no-referrer"
     if request.url.path in {"/predict", "/metrics", "/health"}:
         response.headers["Cache-Control"] = "no-store"
-    if request.url.path == "/" or request.url.path.startswith("/static/"):
+    if request.url.path in {"/", "/sw.js"} or request.url.path.startswith("/static/"):
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; script-src 'self'; style-src 'self'; "
             "img-src 'self'; font-src 'self'; connect-src 'self'; "
@@ -79,12 +79,14 @@ def predict(request: UserRequest) -> dict:
     matrix = np.array([[features[col] for col in MODEL_FEATURES]], dtype=float)
     outside = [name for name, (low, high) in metadata["observed_ranges"].items() if not low <= features[name] <= high]
     try:
-        prediction = float(model.booster_.predict(matrix, num_threads=1)[0])
         contributions = np.asarray(model.booster_.predict(matrix, pred_contrib=True, num_threads=1)[0], dtype=float)
-        if not np.isfinite(prediction) or prediction < 0 or contributions.shape != (len(MODEL_FEATURES) + 1,) or not np.isfinite(contributions).all():
+        if contributions.shape != (len(MODEL_FEATURES) + 1,) or not np.isfinite(contributions).all():
             raise ValueError("Invalid model prediction")
-        if not np.isclose(contributions.sum(), prediction, rtol=1e-6, atol=1e-6):
-            raise ValueError("Feature contributions do not reconcile with the prediction")
+        # LightGBM contributions include the base value and sum to the raw
+        # regression prediction. Avoid a redundant second traversal of the model.
+        prediction = float(contributions.sum())
+        if not np.isfinite(prediction) or prediction < 0:
+            raise ValueError("Invalid model prediction")
     except Exception:
         # Do not log exception values or tracebacks that might include profile data.
         logger.error("Model inference failed")
@@ -134,6 +136,11 @@ def health_check():
     if getattr(app.state, "model", None) is None:
         raise HTTPException(status_code=503, detail="Model is not loaded")
     return {"status": "ok", "version": APP_VERSION, "model_version": app.state.metadata["model_version"], "model loaded": True}
+
+
+@app.get("/sw.js", include_in_schema=False)
+def service_worker():
+    return FileResponse(BASE_DIR / "static/sw.js", media_type="application/javascript", headers={"Cache-Control": "no-cache", "Service-Worker-Allowed": "/"})
 
 
 @app.get("/model-info")

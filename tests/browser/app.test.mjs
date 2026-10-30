@@ -38,6 +38,8 @@ async function pageFor(viewport = { width: 1280, height: 900 }) {
   return { page, errors };
 }
 async function estimate(page) {
+  for (let attempt = 0; attempt < 3 && await page.locator('#next').isVisible(); attempt++) await page.locator('#next').click();
+  assert.equal(await page.locator('#submit').isVisible(), true, await page.locator('#error').textContent());
   await page.locator('#submit').click();
   await page.locator('#result').waitFor({ state: 'visible' });
 }
@@ -73,11 +75,14 @@ test('real predictions, explanations, comparison, export and stale-result handli
     assert.equal('profile' in summary, false);
     await page.locator('#clear-baseline').click();
     assert.equal(await page.locator('#comparison').isVisible(), false);
+    await page.locator('[data-step="1"]').click();
     await page.locator('[name="daily_steps"]').fill('20000');
     await estimate(page);
     assert.equal(await page.locator('#warnings').isVisible(), true);
     assert.match(await page.locator('#warning-list').innerText(), /Daily steps is outside/);
+    await page.locator('[data-step="1"]').click();
     await page.locator('[name="daily_steps"]').fill('7000');
+    await page.locator('[data-step="2"]').click();
     await page.locator('#insurance-type').selectOption('no_insurance');
     assert.equal(await page.locator('#coverage-percent').inputValue(), '0');
     assert.equal(await page.locator('#coverage-percent').isDisabled(), true);
@@ -116,4 +121,117 @@ test('failed prediction hides old results and lets the user retry', async () => 
     await page.unroute('**/predict');
     await estimate(page);
   } finally { await page.context().close(); }
+});
+
+test('guided form validates fields and preserves their values across steps', async () => {
+  const { page } = await pageFor();
+  try {
+    assert.equal(await page.locator('[data-form-step="0"]').isVisible(), true);
+    assert.equal(await page.locator('[data-form-step="1"]').isVisible(), false);
+    await page.locator('[name="age"]').fill('17');
+    await page.locator('#next').click();
+    assert.equal(await page.locator('[data-form-step="0"]').isVisible(), true);
+    assert.match(await page.locator('#error-age').innerText(), /at least 18/);
+    await page.locator('[name="age"]').fill('42');
+    await page.locator('#next').click();
+    assert.equal(await page.locator('[data-form-step="1"]').isVisible(), true);
+    await page.locator('#previous').click();
+    assert.equal(await page.locator('[name="age"]').inputValue(), '42');
+    await page.locator('#view-all').click();
+    assert.equal(await page.locator('[data-form-step]:visible').count(), 3);
+    await estimate(page);
+    assert.ok(await page.locator('#amount').innerText());
+  } finally { await page.context().close(); }
+});
+
+test('scenario explores a separate profile and a printable PDF omits form inputs', async () => {
+  const { page, errors } = await pageFor();
+  try {
+    await estimate(page);
+    const amount = await page.locator('#amount').innerText();
+    const admissions = await page.locator('[name="hospital_admissions"]').inputValue();
+    await page.locator('#scenario-value').fill('3');
+    await page.locator('#scenario-calculate').click();
+    await page.locator('#scenario-result').waitFor({ state: 'visible' });
+    assert.notEqual(await page.locator('#scenario-amount').innerText(), amount);
+    assert.equal(await page.locator('#amount').innerText(), amount);
+    assert.equal(await page.locator('[name="hospital_admissions"]').inputValue(), admissions);
+    assert.equal(await page.locator('#scenario-chart').evaluate(canvas => Boolean(window.Chart.getChart(canvas))), true);
+    await page.evaluate(() => { window.print = () => { window.printCalled = true; }; });
+    await page.locator('#print').click();
+    assert.equal(await page.evaluate(() => window.printCalled), true);
+    assert.match(await page.locator('#print-report').textContent(), /Scenario comparison/);
+    assert.match(await page.locator('#print-report').textContent(), /INR|Indian rupees/);
+    assert.equal(await page.locator('#print-report input').count(), 0);
+    await page.emulateMedia({ media: 'print' });
+    assert.equal(await page.locator('#main').isVisible(), false);
+    assert.equal(await page.locator('#print-report').isVisible(), true);
+    const pdf = await page.pdf({ format: 'A4' });
+    assert.equal(pdf.subarray(0, 4).toString(), '%PDF');
+    assert.ok(pdf.length > 5000);
+    await page.emulateMedia({ media: 'screen' });
+    const accessibility = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
+    assert.deepEqual(accessibility.violations.map(v => ({ id: v.id, nodes: v.nodes.map(n => n.target) })), []);
+    await page.locator('#scenario-value').fill('2');
+    assert.equal(await page.locator('#scenario-result').isVisible(), false);
+    assert.deepEqual(errors, []);
+  } finally { await page.context().close(); }
+});
+
+test('Hindi, dark theme and reports work without storing health profiles', async () => {
+  const { page, errors } = await pageFor({ width: 390, height: 844 });
+  try {
+    await page.locator('#language').selectOption('hi');
+    assert.equal(await page.locator('html').getAttribute('lang'), 'hi-IN');
+    assert.match(await page.locator('h1').innerText(), /चिकित्सा/);
+    await estimate(page);
+    assert.equal(await page.locator('#result-heading').innerText(), 'आपका सालाना खर्च अनुमान');
+    assert.match(await page.locator('#factors').innerText(), /कम|अधिक/);
+    await page.locator('#theme').click();
+    assert.equal(await page.locator('html').getAttribute('data-theme'), 'dark');
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+    const accessibility = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
+    assert.deepEqual(accessibility.violations.map(v => ({ id: v.id, nodes: v.nodes.map(n => n.target) })), []);
+    await page.evaluate(() => { window.print = () => {}; });
+    await page.locator('#print').click();
+    assert.match(await page.locator('#print-report').textContent(), /अनुमान रिपोर्ट/);
+    await page.emulateMedia({ media: 'print' });
+    const pdf = await page.pdf({ format: 'A4' });
+    assert.equal(pdf.subarray(0, 4).toString(), '%PDF');
+    await page.emulateMedia({ media: 'screen' });
+    assert.deepEqual(await page.evaluate(() => Object.keys(localStorage).sort()), ['careestimate-language', 'careestimate-theme']);
+    if (process.env.HINDI_SCREENSHOT_PATH) await page.screenshot({ path: process.env.HINDI_SCREENSHOT_PATH, fullPage: true });
+    await page.reload();
+    assert.equal(await page.locator('html').getAttribute('lang'), 'hi-IN');
+    assert.equal(await page.locator('html').getAttribute('data-theme'), 'dark');
+    assert.equal(await page.locator('#result').isVisible(), false);
+    assert.deepEqual(errors, []);
+  } finally { await page.context().close(); }
+});
+
+test('installed app shell works offline and never caches predictions or profiles', async () => {
+  const { page } = await pageFor();
+  const context = page.context();
+  try {
+    await page.evaluate(async () => { await navigator.serviceWorker.ready; });
+    await page.waitForFunction(() => Boolean(navigator.serviceWorker.controller));
+    await estimate(page);
+    const paths = await page.evaluate(async () => {
+      const values = [];
+      for (const key of await caches.keys()) for (const request of await (await caches.open(key)).keys()) values.push(new URL(request.url).pathname);
+      return values;
+    });
+    assert.ok(paths.includes('/static/app.js'));
+    assert.ok(paths.every(path => path === '/' || path.startsWith('/static/')));
+    assert.equal(paths.includes('/predict'), false);
+    assert.equal(paths.includes('/model-info'), false);
+    await context.setOffline(true);
+    await page.reload();
+    await page.locator('#connection-note').waitFor({ state: 'visible' });
+    assert.equal(await page.locator('#result').isVisible(), false);
+    assert.match(await page.locator('#connection-note').innerText(), /predictions need an internet/);
+    assert.equal(await page.evaluate(() => window.CareCharts !== undefined && window.Chart !== undefined), true);
+    await context.setOffline(false);
+    await estimate(page);
+  } finally { await context.setOffline(false); await context.close(); }
 });

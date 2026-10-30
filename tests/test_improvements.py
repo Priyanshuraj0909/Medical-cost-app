@@ -182,3 +182,39 @@ def test_offline_pipeline_produces_loadable_independent_bundle(tmp_path):
     assert (output / 'residuals.svg').is_file()
     with pytest.raises(ValueError, match='empty output'):
         train(data, card_path, output, folds=2)
+
+
+@pytest.mark.parametrize('age,smoker,admissions,coverage', [(18,'no',0,0), (35,'yes',2,.7), (65,'no',1,.9), (89,'yes',6,.5)])
+def test_single_pass_prediction_matches_original_regression(client, profile, age, smoker, admissions, coverage):
+    profile.update(age=age, smoker_raw=smoker, hospital_admissions=admissions, insurance_coverage_frac=coverage)
+    features = UserRequest(**profile).model_features()
+    expected = app.state.model.booster_.predict([list(features.values())], num_threads=1)[0]
+    result = client.post('/predict', json=profile).json()
+    assert result['predicted_medical_cost'] == pytest.approx(float(expected), abs=.0051)
+
+
+def test_latency_histogram_counts_success_only():
+    from monitoring import ServiceMetrics
+    metrics = ServiceMetrics()
+    metrics.record('success', .02, [])
+    metrics.record('success', .15, [])
+    metrics.record('failure', 9, [])
+    text = metrics.render()
+    assert 'careestimate_prediction_duration_seconds_count 2' in text
+    total = next(line for line in text.splitlines() if line.startswith('careestimate_prediction_duration_seconds_sum '))
+    assert float(total.split()[1]) == pytest.approx(.17)
+    assert 'careestimate_prediction_duration_seconds_bucket{le="0.01"} 0' in text
+    assert 'careestimate_prediction_duration_seconds_bucket{le="0.025"} 1' in text
+    assert 'careestimate_prediction_duration_seconds_bucket{le="+Inf"} 2' in text
+
+
+def test_pwa_assets_and_service_worker_scope(client):
+    response = client.get('/sw.js')
+    assert response.status_code == 200
+    assert response.headers['service-worker-allowed'] == '/'
+    assert response.headers['cache-control'] == 'no-cache'
+    manifest = client.get('/static/manifest.webmanifest').json()
+    assert manifest['display'] == 'standalone'
+    for icon in manifest['icons']:
+        assert client.get(icon['src']).status_code == 200
+    assert client.get('/static/vendor/chart.umd.min.js').status_code == 200

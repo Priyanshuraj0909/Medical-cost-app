@@ -21,6 +21,8 @@ def load_bundle(directory: Path):
     actual = [name.replace("-", "_") for name in model.booster_.feature_name()]
     if actual != MODEL_FEATURES:
         raise ValueError("Model feature contract does not match application features")
+    if model.booster_.params.get("objective") not in {"regression", "regression_l2", "l2", "mean_squared_error", "mse"}:
+        raise ValueError("Single-pass cost inference requires a regression model with an identity link")
     if not isinstance(metadata["model_version"], str) or not metadata["model_version"]:
         raise ValueError("Model version is required")
     for name, bounds in metadata["observed_ranges"].items():

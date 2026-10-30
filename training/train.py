@@ -203,11 +203,20 @@ def main():
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--folds", type=int, default=5)
     parser.add_argument("--coverage", type=float, default=.9)
+    parser.add_argument("--mlflow-tracking-uri", help="Optional explicit MLflow store/server URI; no tracking occurs unless supplied")
+    parser.add_argument("--mlflow-experiment", default="CareEstimate")
     args = parser.parse_args()
     try:
         report = train(args.data, args.data_card, args.output, args.seed, args.folds, args.coverage)
     except (ValueError, OSError, KeyError, TypeError) as exc:
         parser.exit(2, f"Training failed: {exc}\n")
+    if args.mlflow_tracking_uri:
+        from training.tracking import log_experiment
+        try:
+            run_id = log_experiment(args.output, args.mlflow_tracking_uri, args.mlflow_experiment)
+        except Exception:
+            parser.exit(2, "Experiment tracking failed. Candidate artifacts were preserved; check the tracking configuration.\n")
+        print(json.dumps({"mlflow_run_id": run_id}))
     print(json.dumps({"output": str(args.output), "lightgbm_test": report["models"]["lightgbm"]["held_out_test"]}, indent=2))
 
 

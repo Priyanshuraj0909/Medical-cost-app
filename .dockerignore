@@ -13,3 +13,8 @@ training
 docs
 data
 package*.json
+requirements-training.txt
+mlruns
+mlflow.db
+mlflow-artifacts
+scripts
