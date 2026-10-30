@@ -85,6 +85,7 @@ function render(result) {
   $('#amount').textContent = format(result.predicted_medical_cost);
   $('#monthly').textContent = format(result.predicted_medical_cost / 12);
   $('#currency-unit').textContent = `estimated annual cost · ${result.currency}`;
+  renderDatasetStatus(result.dataset_status);
   $('#model-version').textContent = `LightGBM · model ${result.model_version}`;
   $('#result-heading').textContent = 'Your annual cost estimate';
   $('#result-description').textContent = 'Based on the profile you provided. Review the model’s limits below.';
@@ -112,6 +113,27 @@ function render(result) {
   $('#warnings').hidden = !result.warnings.length;
   $('#result').hidden = false; $('#explanation').hidden = false;
   comparison();
+}
+
+function renderDatasetStatus(status) {
+  const notes = status?.notes || ['Dataset documentation could not be loaded. Currency and cost definition have not been confirmed.'];
+  const details = $('#dataset-details');
+  details.replaceChildren();
+  for (const message of notes) {
+    const item = document.createElement('li'); item.textContent = message; details.append(item);
+  }
+  if (!notes.length) {
+    const item = document.createElement('li'); item.textContent = 'Source, currency and cost definition are documented in the model information.'; details.append(item);
+  }
+  const missing = status?.missing_details;
+  const note = !status ? 'Demo estimate. Dataset documentation could not be loaded.'
+    : missing.includes('currency') && missing.includes('cost_definition') ? 'Demo estimate in dataset units. Currency and total versus out-of-pocket cost definition are not documented.'
+    : missing.includes('currency') ? 'Demo estimate in dataset units. Currency is not documented.'
+    : missing.includes('cost_definition') ? 'Demo estimate. Total versus out-of-pocket cost definition is not documented.'
+    : missing.includes('source') ? 'Demo estimate. The original dataset source is not documented.'
+    : 'Model estimate. See dataset details for its scope and limitations.';
+  $('#dataset-note').textContent = note;
+  $('#scope-note').textContent = `For adults aged 18–89. ${note}`;
 }
 
 form.addEventListener('submit', async event => {
@@ -152,5 +174,6 @@ form.addEventListener('submit', async event => {
 });
 syncInsurance();
 fetch('/model-info').then(response => { if (!response.ok) throw new Error(); return response.json(); }).then(info => {
+  renderDatasetStatus(info.dataset_status);
   $('#model-status').textContent = `Model ${info.model_version}. ${info.validation_status}`;
 }).catch(() => { $('#model-status').textContent = 'Model information is unavailable. See the project documentation for known limitations.'; });

@@ -11,6 +11,7 @@ from fastapi.testclient import TestClient
 
 from app import app
 from model_bundle import load_bundle
+from schema.dataset import dataset_status
 from schema.user_input import UserRequest
 from training.train import RAW_FEATURES, conformal_radius, prepare_data, train
 
@@ -37,7 +38,10 @@ def test_explanations_reconcile_and_uncertainty_is_honest(client, profile):
     assert len(result['explanation']['contributions']) == 20
     assert result['prediction_interval'] is None
     assert 'unavailable' in result['uncertainty_note']
-    assert result['warnings']
+    assert result['warnings'] == []
+    assert result['dataset_status']['status'] == 'incomplete'
+    assert result['dataset_status']['missing_details'] == ['currency', 'source', 'cost_definition']
+    assert result['currency'] == 'dataset units (currency unspecified)'
 
 
 @pytest.mark.parametrize('changes', [dict(age=17), dict(age=90), dict(insurance_type_raw='no_insurance'),
@@ -69,6 +73,39 @@ def test_monitoring_contains_only_aggregates_and_security_headers(client, profil
     assert 'feature="daily_steps"} 1' in metrics
     assert '20000' not in metrics and 'gender_raw' not in metrics
     assert client.get('/model-info').json()['dataset']['source_url'] is None
+
+
+@pytest.mark.parametrize('field,value,missing', [
+    ('currency', None, 'currency'),
+    ('currency', '   ', 'currency'),
+    ('source_url', None, 'source'),
+    ('source_url', 'not-a-url', 'source'),
+    ('target_definition', None, 'cost_definition'),
+    ('target_definition', 'Unverified: cost definition', 'cost_definition'),
+])
+def test_dataset_gaps_are_reported_independently(field, value, missing):
+    dataset = dict(currency='TEST', source_url='https://example.invalid/test-fixture',
+                   target_definition='Artificial total spending target for a test fixture')
+    dataset[field] = value
+    status = dataset_status(dataset)
+    assert status.status == 'incomplete'
+    assert status.missing_details == [missing]
+    assert len(status.notes) == 1
+
+
+def test_documented_dataset_does_not_claim_independent_verification():
+    status = dataset_status(dict(currency='TEST', source_url='https://example.invalid/test-fixture',
+                                 target_definition='Artificial test cost'))
+    assert status.status == 'documented'
+    assert status.notes == []
+
+
+def test_cost_definition_gap_remains_visible_with_source_and_currency(client, profile):
+    app.state.metadata['dataset'].update(currency='TEST', source_url='https://example.invalid/test-fixture')
+    result = client.post('/predict', json=profile).json()
+    assert result['dataset_status']['missing_details'] == ['cost_definition']
+    assert 'out-of-pocket' in result['dataset_status']['notes'][0]
+    assert result['dataset_status'] == client.get('/model-info').json()['dataset_status']
 
 
 def test_calibrated_interval_and_outside_suppression(client, profile):

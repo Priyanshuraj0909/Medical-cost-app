@@ -32,3 +32,9 @@ Automated accessibility checks cover only the tested states and do not replace m
 API v2 retains `predicted_medical_cost` and adds version, currency, warnings, contributions, uncertainty status and optional intervals. Stricter validation now rejects ages outside 18–89, unknown fields and nonzero coverage with `no_insurance`. Consumers that send extra fields or expect a one-field response must adapt.
 
 The historical model is unchanged. Improvements to interface and validation are not evidence of improved predictive accuracy. Review the [data card](DATA_CARD.md) before making claims about the model.
+
+## Dataset documentation display (v2.1)
+
+Prediction and model-info responses include `dataset_status`: a `documented` or `incomplete` status, missing detail identifiers, and plain-language notes. Currency, source URL and cost definition are checked separately. A documented value is not a claim of independent verification. Missing, blank and placeholder definitions remain incomplete even when currency and source are present.
+
+Missing documentation is shown as a neutral demo note next to the estimate, with details in “Dataset details & model limits.” Yellow warnings are reserved for profile inputs outside recorded ranges. The original documentation gap is unresolved; no currency or cost definition has been invented. Downloaded summaries retain the same structured status.

@@ -9,7 +9,7 @@
 <div class="workspace">
 <form id="estimate-form" aria-describedby="scope-note">
 <div class="form-heading"><div><span class="eyebrow">01 / YOUR PROFILE</span><h2>Let’s start with you</h2></div><button class="text-button" id="example" type="button">Use an example</button></div>
-<p class="form-note" id="scope-note">For adults aged 18–89. Estimates use the training dataset’s units; its currency and cost definition are unverified.</p>
+<p class="form-note" id="scope-note">Educational demo for adults aged 18–89. Amounts use dataset units, with no confirmed currency or total versus out-of-pocket cost definition.</p>
 <fieldset><legend>Personal details</legend><div class="fields">
 <label>Age <span>years</span><input name="age" type="number" min="18" max="89" value="35" required></label>
 <label>Gender<select name="gender_raw"><option value="female">Female</option><option value="male">Male</option></select></label>
@@ -40,6 +40,7 @@
 <div role="status" aria-live="polite"><h2 id="result-heading">Plan with a little<br>more clarity.</h2><p id="result-description">Complete your profile to see your estimated annual medical cost.</p></div>
 <div id="result" hidden>
 <div class="amount" id="amount"></div><span class="unit" id="currency-unit">estimated annual cost · dataset currency units</span>
+<p class="dataset-note" id="dataset-note"></p>
 <div class="monthly"><span>Monthly equivalent</span><strong id="monthly"></strong></div>
 <p class="interval" id="interval"></p><p class="uncertainty" id="uncertainty"></p>
 <div class="result-actions"><button id="pin" type="button" class="secondary">Keep for comparison</button><button id="download" type="button" class="secondary">Download summary ↓</button></div>
@@ -51,9 +52,9 @@
 <table><caption class="sr-only">Annual cost comparison in dataset currency units</caption><thead><tr><th scope="col">Kept estimate</th><th scope="col">Current estimate</th></tr></thead><tbody><tr><td id="baseline-amount"></td><td id="current-amount"></td></tr></tbody></table>
 <p id="difference"></p><ul id="changed-fields"></ul><p class="small">A model comparison shows associations. It does not predict the effect of changing your lifestyle or insurance.</p></section>
 <section id="explanation" class="detail-card" hidden aria-labelledby="explanation-heading"><span class="eyebrow">UNDERSTAND YOUR ESTIMATE</span><h3 id="explanation-heading">What shaped this number?</h3><p class="small">The five largest model contributions. “Higher” and “lower” refer to the model’s average starting value.</p><p id="base-value" class="small"></p><ol id="factors" class="factors"></ol><p class="small">These explain the model’s calculation. They are not causes or guaranteed savings.</p></section>
-<section id="warnings" class="notice" hidden aria-labelledby="warnings-heading"><h3 id="warnings-heading">Before you use this estimate</h3><ul id="warning-list"></ul></section>
-<section class="help"><h3>A starting point for exploration</h3><p>This estimate is not a bill or an insurance quote. The original dataset’s currency and whether the target means total or out-of-pocket spending have not been verified.</p><p>Care counts refer to the preceding 12 months. The original dataset’s feature timing is unverified, so next-year forecasting performance is not established.</p>
-<details id="model-details"><summary>Model scope & validation</summary><p id="model-status">Loading model information…</p><a href="/model-info">View model information ↗</a></details></section>
+<section id="warnings" class="notice" hidden aria-labelledby="warnings-heading"><h3 id="warnings-heading">Check these profile details</h3><ul id="warning-list"></ul></section>
+<section class="help"><h3>About this demo</h3><p>This model demonstrates medical cost estimation. It is not a bill or insurance quote.</p>
+<details id="model-details"><summary>Dataset details & model limits</summary><ul id="dataset-details"><li>Currency, original source and total versus out-of-pocket cost definition are not documented.</li></ul><p>Care counts refer to the preceding 12 months. The original dataset’s feature timing is unverified, so next-year forecasting performance is not established.</p><p id="model-status">Loading model information…</p><a href="/model-info">View model information ↗</a></details></section>
 <a class="api-link" href="/docs">Explore the prediction API <span>↗</span></a>
 </aside>
 </div>

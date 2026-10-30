@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field
+from schema.dataset import DatasetStatus
 
 
 class FeatureContribution(BaseModel):
@@ -23,7 +24,8 @@ class PredictionInterval(BaseModel):
 class PredictionResponse(BaseModel):
     predicted_medical_cost: float = Field(ge=0, allow_inf_nan=False, description="Annual estimate in dataset currency units")
     model_version: str
-    currency: str = "unverified dataset currency units"
+    currency: str = "dataset units (currency unspecified)"
+    dataset_status: DatasetStatus
     warnings: list[str]
     explanation: Explanation
     prediction_interval: PredictionInterval | None = None

@@ -13,11 +13,12 @@ import numpy as np
 
 from model_bundle import load_bundle
 from monitoring import ServiceMetrics
+from schema.dataset import dataset_status
 from schema.output import PredictionResponse
 from schema.user_input import UserRequest, MODEL_FEATURES
 
 BASE_DIR = Path(__file__).resolve().parent
-APP_VERSION = "2.0.0"
+APP_VERSION = "2.1.0"
 logger = logging.getLogger(__name__)
 
 
@@ -89,10 +90,8 @@ def predict(request: UserRequest) -> dict:
         logger.error("Model inference failed")
         app.state.metrics.record("failure", 0, [])
         raise HTTPException(status_code=503, detail="Unable to calculate an estimate. Please try again.") from None
-    warnings = [
-        "The original dataset's currency, provenance and exact cost definition are unverified."
-    ] if metadata["dataset"].get("currency") is None or metadata["dataset"].get("source_url") is None else []
-    warnings.extend(f"{name.replace('_', ' ').capitalize()} is outside the recorded training range; this estimate may be unreliable." for name in outside)
+    documentation = dataset_status(metadata["dataset"])
+    warnings = [f"{name.replace('_', ' ').capitalize()} is outside the recorded training range; this estimate may be unreliable." for name in outside]
     interval = None
     uncertainty_note = "A calibrated prediction interval is unavailable for this model. The estimate does not express certainty."
     calibration = metadata.get("interval")
@@ -110,7 +109,8 @@ def predict(request: UserRequest) -> dict:
     return {
         "predicted_medical_cost": round(prediction, 2),
         "model_version": metadata["model_version"],
-        "currency": metadata["dataset"].get("currency") or "unverified dataset currency units",
+        "currency": "dataset units (currency unspecified)" if "currency" in documentation.missing_details else metadata["dataset"]["currency"],
+        "dataset_status": documentation.model_dump(),
         "warnings": warnings,
         "explanation": {
             "base_value": float(contributions[-1]),
@@ -140,10 +140,12 @@ def health_check():
 def model_info():
     """Public provenance and validation status; no submitted profiles."""
     metadata = app.state.metadata
-    return {key: metadata.get(key) for key in (
+    result = {key: metadata.get(key) for key in (
         "model_version", "artifact_sha256", "dataset", "validation_status",
         "historical_metrics", "observed_ranges", "interval",
     )}
+    result["dataset_status"] = dataset_status(metadata["dataset"]).model_dump()
+    return result
 
 
 @app.get("/metrics", response_class=PlainTextResponse)

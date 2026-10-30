@@ -30,3 +30,7 @@ The UI now explicitly asks for care utilization in the preceding 12 months. This
 6. Review baseline errors, subgroup counts, residuals, interval coverage, and the source license before promoting a model.
 
 The new training script intentionally rejects missing categories. Never replace the absent original CSV with a generated dataset while retaining claims about the original model's quality.
+
+## User-facing documentation status
+
+The app labels this model as an educational demo and uses “dataset units (currency unspecified).” It displays the unresolved currency and cost basis beside the prediction, while “Dataset details & model limits” lists the source gap and timing limitations. This replaces the repeated generic yellow documentation warning. Actual range warnings remain yellow. Repository history and matching local dataset filenames were checked, but no original CSV or authoritative data dictionary was recovered. Source, currency and target meaning remain unknown.

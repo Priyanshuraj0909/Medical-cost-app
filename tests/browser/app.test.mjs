@@ -46,6 +46,11 @@ test('real predictions, explanations, comparison, export and stale-result handli
   const { page, errors } = await pageFor();
   try {
     await estimate(page);
+    assert.equal(await page.locator('#warnings').isVisible(), false);
+    assert.match(await page.locator('#dataset-note').innerText(), /Currency and total versus out-of-pocket cost definition are not documented/);
+    await page.locator('#model-details summary').click();
+    assert.match(await page.locator('#dataset-details').innerText(), /original dataset source is not recorded/);
+    await page.locator('#model-details summary').click();
     if (process.env.DESKTOP_SCREENSHOT_PATH) await page.screenshot({ path: process.env.DESKTOP_SCREENSHOT_PATH, fullPage: true });
     assert.equal(await page.locator('#factors li').count(), 5);
     assert.match(await page.locator('#uncertainty').innerText(), /unavailable/);
@@ -64,6 +69,11 @@ test('real predictions, explanations, comparison, export and stale-result handli
     assert.equal('profile' in summary, false);
     await page.locator('#clear-baseline').click();
     assert.equal(await page.locator('#comparison').isVisible(), false);
+    await page.locator('[name="daily_steps"]').fill('20000');
+    await estimate(page);
+    assert.equal(await page.locator('#warnings').isVisible(), true);
+    assert.match(await page.locator('#warning-list').innerText(), /Daily steps is outside/);
+    await page.locator('[name="daily_steps"]').fill('7000');
     await page.locator('#insurance-type').selectOption('no_insurance');
     assert.equal(await page.locator('#coverage-percent').inputValue(), '0');
     assert.equal(await page.locator('#coverage-percent').isDisabled(), true);

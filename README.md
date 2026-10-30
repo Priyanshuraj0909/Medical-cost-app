@@ -186,13 +186,13 @@ curl --request POST http://localhost:8000/predict \
   }'
 ```
 
-The response retains `predicted_medical_cost` and adds model version, currency, warnings, full feature contributions, uncertainty status, and an optional calibrated interval. Selected fields from the included model:
+The response retains `predicted_medical_cost` and adds model version, currency, warnings, full feature contributions, uncertainty status, an optional calibrated interval, and structured `dataset_status` documentation notes. Selected fields from the included model:
 
 ```json
 {
   "predicted_medical_cost": 1094.9,
   "model_version": "1.0.0",
-  "currency": "unverified dataset currency units",
+  "currency": "dataset units (currency unspecified)",
   "prediction_interval": null
 }
 ```
@@ -211,7 +211,7 @@ The response retains `predicted_medical_cost` and adds model version, currency, 
 
 Categories are trimmed and case-insensitive. The API accepts insurance coverage as a fraction from `0` to `1`; the web form accepts a percentage. BMI and the out-of-pocket fraction are derived automatically.
 
-Ages must be **18–89**. `no_insurance` requires zero coverage. Unknown fields, invalid categories, non-finite numbers, negative counts/costs, zero height/weight, and out-of-range bounded inputs return **HTTP 422** without echoing submitted values. Other recorded training-range excursions return warnings. Model unavailability or prediction failures return **HTTP 503**.
+Ages must be **18–89**. `no_insurance` requires zero coverage. Unknown fields, invalid categories, non-finite numbers, negative counts/costs, zero height/weight, and out-of-range bounded inputs return **HTTP 422** without echoing submitted values. Other recorded training-range excursions return warnings. Missing dataset documentation appears separately in `dataset_status`, with a visible demo note beside the estimate. Model unavailability or prediction failures return **HTTP 503**.
 
 </details>
 
