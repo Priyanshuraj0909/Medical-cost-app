@@ -1,0 +1,2 @@
+age,gender_raw,city,smoker_raw,physical_activity_level_raw,daily_steps,sleep_hours,stress_level,diabetes,heart_disease,hypertension,asthma,doctor_visits_per_year,hospital_admissions,medication_count,previous_year_cost,insurance_type_raw,insurance_coverage_frac,height_cm,weight_kg
+35,female,urban,no,medium,7000,7,4,0,0,0,0,3,0,0,5000,private,0.8,165,65

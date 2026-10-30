@@ -9,16 +9,18 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.concurrency import run_in_threadpool
 import numpy as np
 
 from model_bundle import load_bundle
+from batch import describe_rows, parse_profiles, read_csv_body
 from monitoring import ServiceMetrics
 from schema.dataset import dataset_status
-from schema.output import PredictionResponse
+from schema.output import PredictionResponse, BatchResponse
 from schema.user_input import UserRequest, MODEL_FEATURES
 
 BASE_DIR = Path(__file__).resolve().parent
-APP_VERSION = "3.0.0"
+APP_VERSION = "4.0.0"
 logger = logging.getLogger(__name__)
 
 
@@ -45,7 +47,7 @@ async def response_headers(request: Request, call_next):
     response = await call_next(request)
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Referrer-Policy"] = "no-referrer"
-    if request.url.path in {"/predict", "/metrics", "/health"}:
+    if request.url.path in {"/predict", "/metrics", "/health"} or request.url.path.startswith('/batch/'):
         response.headers["Cache-Control"] = "no-store"
     if request.url.path in {"/", "/sw.js"} or request.url.path.startswith("/static/"):
         response.headers["Content-Security-Policy"] = (
@@ -124,6 +126,36 @@ def predict(request: UserRequest) -> dict:
         "prediction_interval": interval,
         "uncertainty_note": uncertainty_note,
     }
+
+
+@app.post('/batch/validate', response_model=BatchResponse)
+async def validate_batch(request: Request):
+    rows = parse_profiles(await read_csv_body(request))
+    return describe_rows(rows, 'validation')
+
+
+def predict_batch_rows(rows):
+    if getattr(app.state, 'model', None) is None:
+        raise HTTPException(503, 'Prediction service is unavailable')
+    response = describe_rows(rows, 'prediction')
+    for source, result in zip(rows, response['rows']):
+        if source['profile'] is None:
+            continue
+        try:
+            result['prediction'] = predict(source['profile'])
+            result['status'] = 'predicted'
+            response['predicted_rows'] += 1
+        except HTTPException:
+            result['status'] = 'unavailable'
+            result['errors'] = [{'field': 'service', 'message': 'Unable to calculate this estimate. Please try again.'}]
+            response['failed_rows'] += 1
+    return response
+
+
+@app.post('/batch/predict', response_model=BatchResponse)
+async def batch_predict(request: Request):
+    rows = parse_profiles(await read_csv_body(request))
+    return await run_in_threadpool(predict_batch_rows, rows)
 
 
 @app.get("/", include_in_schema=False)

@@ -25,6 +25,8 @@ const label = key => t(labels[key] || key);
 let current = null;
 let baseline = null;
 let scenario = null;
+let scenarios = [];
+const MAX_SCENARIOS = 6;
 let busy = false;
 let scenarioBusy = false;
 let scenarioController = null;
@@ -89,8 +91,9 @@ function resetScenario() {
   charts.destroy('scenario-chart');
 }
 function invalidate() {
-  current = null; resetScenario(); charts.clear();
-  for (const id of ['result', 'explanation', 'warnings', 'comparison', 'scenario-panel', 'insights']) $(`#${id}`).hidden = true;
+  current = null; scenarios = []; resetScenario(); charts.clear();
+  $('#workspace-message').textContent = '';
+  for (const id of ['result', 'explanation', 'warnings', 'comparison', 'scenario-panel', 'insights', 'workspace-panel']) $(`#${id}`).hidden = true;
   $('#print-report').replaceChildren(); $('#print-report').hidden = true;
   $('#result-heading').textContent = t('Ready for a fresh estimate');
   $('#result-description').textContent = t(baseline ? 'A comparison is kept. Change your profile and calculate again.' : 'Calculate again to use your current details.');
@@ -149,6 +152,7 @@ $('#download').addEventListener('click', () => {
     generated_at: current.generated_at, language: i18n.language, display_currency: displayCurrency, estimate: current.result,
     comparison: comparable() ? { kept_estimate: baseline.result, current_estimate: current.result } : null,
     scenario: scenario ? { estimate: scenario.result, changed_factor: scenario.feature, scenario_value: scenario.value } : null,
+    saved_scenarios: scenarios.map(item => ({ name: scenarioName(item), changed_factor: item.feature, scenario_value: item.value, estimate: item.result })),
     note: t('Educational model estimate, not a bill or insurance quote. Monthly equivalent is annual cost divided by twelve. Raw profile inputs are omitted from this file.'),
   };
   const url = URL.createObjectURL(new Blob([JSON.stringify(summary, null, 2)], { type: 'application/json' }));
@@ -188,9 +192,72 @@ function render() {
   }
   listMessages('#warning-list', result.warnings, warningText); $('#warnings').hidden = !result.warnings.length;
   $('#result').hidden = false; $('#explanation').hidden = false; $('#scenario-panel').hidden = false; $('#insights').hidden = false;
-  charts.bar('contribution-chart', top.map(item => label(item.feature)), top.map(item => item.contribution), { horizontal: true, signed: true });
-  comparison(); if (scenario) renderScenario();
+  renderWaterfall(result);
+  comparison(); renderWorkspace(); if (scenario) renderScenario();
 }
+
+function waterfallRows(result) {
+  let running = result.explanation.base_value;
+  const rows = [{ label: t('Base value'), start: 0, end: running, delta: null }];
+  for (const item of result.explanation.contributions) {
+    const start = running; running += item.contribution;
+    rows.push({ label: label(item.feature), start, end: running, delta: item.contribution });
+  }
+  rows.push({ label: t('Final estimate'), start: 0, end: result.predicted_medical_cost, delta: null });
+  return rows;
+}
+function renderWaterfall(result) {
+  const rows = waterfallRows(result);
+  charts.waterfall('contribution-chart', rows, format, t('Running total'));
+  const table = $('#waterfall-table tbody'); table.replaceChildren();
+  for (const row of rows) {
+    const tr = document.createElement('tr');
+    for (const value of [row.label, row.delta === null ? '—' : format(row.delta), format(row.end)]) {
+      const td = document.createElement('td'); td.textContent = value; tr.append(td);
+    }
+    table.append(tr);
+  }
+}
+
+function scenarioName(item) {
+  return item.name || `${label(item.feature)}: ${item.feature === 'insurance_coverage_frac' ? `${Math.round(item.value * 100)}%` : item.value}`;
+}
+function renderWorkspace() {
+  if (!current) return;
+  $('#workspace-panel').hidden = false;
+  $('#workspace-results').hidden = !scenarios.length;
+  $('#workspace-empty').hidden = Boolean(scenarios.length);
+  $('#workspace-clear').disabled = !scenarios.length;
+  const table = $('#workspace-table tbody'); table.replaceChildren();
+  for (const item of scenarios) {
+    const tr = document.createElement('tr');
+    const nameCell = document.createElement('td'); const input = document.createElement('input');
+    input.type = 'text'; input.maxLength = 40; input.value = scenarioName(item); input.autocomplete = 'off';
+    input.setAttribute('aria-label', t('Rename {name}', { name: scenarioName(item) }));
+    input.addEventListener('change', () => { item.name = input.value.trim().slice(0, 40); renderWorkspace(); });
+    nameCell.append(input); tr.append(nameCell);
+    const value = item.feature === 'insurance_coverage_frac' ? `${Math.round(item.value * 100)}%` : item.value;
+    const delta = item.result.predicted_medical_cost - current.result.predicted_medical_cost;
+    for (const text of [`${label(item.feature)}: ${value}`, format(item.result.predicted_medical_cost), `${delta > 0 ? '+' : ''}${format(delta)}`]) {
+      const cell = document.createElement('td'); cell.textContent = text; tr.append(cell);
+    }
+    const action = document.createElement('td'); const remove = document.createElement('button');
+    remove.type = 'button'; remove.className = 'text-button'; remove.textContent = t('Remove');
+    remove.setAttribute('aria-label', t('Remove {name}', { name: scenarioName(item) }));
+    remove.addEventListener('click', () => { scenarios = scenarios.filter(row => row.id !== item.id); renderWorkspace(); });
+    action.append(remove); tr.append(action); table.append(tr);
+  }
+  if (scenarios.length) charts.bar('workspace-chart', [t('Current estimate'), ...scenarios.map(item => scenarioName(item))], [current.result.predicted_medical_cost, ...scenarios.map(item => item.result.predicted_medical_cost)], { horizontal: true });
+  else charts.destroy('workspace-chart');
+}
+$('#scenario-save').addEventListener('click', () => {
+  if (!current || !scenario || scenarioBusy) return;
+  if (scenarios.length >= MAX_SCENARIOS) { $('#workspace-message').textContent = t('The workspace holds six scenarios. Remove one before saving another.'); return; }
+  if (scenarios.some(item => item.feature === scenario.feature && item.value === scenario.value)) { $('#workspace-message').textContent = t('This scenario is already saved. Rename it in the workspace.'); return; }
+  scenarios.push({ ...structuredClone(scenario), id: crypto.randomUUID(), name: $('#scenario-name').value.trim().slice(0, 40) });
+  $('#scenario-name').value = ''; $('#workspace-message').textContent = t('Scenario saved to the workspace.'); renderWorkspace();
+});
+$('#workspace-clear').addEventListener('click', () => { scenarios = []; renderWorkspace(); $('#workspace-message').textContent = t('Saved scenarios cleared.'); });
 async function requestPrediction(payload, signal) {
   const response = await fetch('/predict', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), signal: signal || AbortSignal.timeout(30000) });
   const data = await response.json().catch(() => { throw new Error(t('Unable to calculate your estimate. Please try again.')); });
@@ -201,6 +268,96 @@ async function requestPrediction(payload, signal) {
   if (!Number.isFinite(data.predicted_medical_cost) || data.predicted_medical_cost < 0) throw new Error(t('The service returned an invalid estimate.'));
   return data;
 }
+// CSV source and predictions are kept only in this page's memory.
+let batchText = null;
+let batchResult = null;
+let batchController = null;
+function batchControls() {
+  const loading = Boolean(batchController);
+  $('#batch-validate').disabled = loading || batchText === null;
+  $('#batch-predict').disabled = loading || !batchResult?.valid_rows;
+  $('#batch-download').disabled = loading || batchResult?.operation !== 'prediction';
+  $('#batch-panel').setAttribute('aria-busy', String(loading));
+}
+function clearBatch({ resetFile = true } = {}) {
+  batchController?.abort(); batchController = null; batchText = null; batchResult = null;
+  if (resetFile) $('#batch-file').value = '';
+  $('#batch-rows').replaceChildren(); $('#batch-results').hidden = true;
+  $('#batch-status').textContent = t('Choose a file to begin.'); $('#batch-error').hidden = true; batchControls();
+}
+function renderBatch() {
+  if (!batchResult) return;
+  $('#batch-status').textContent = t('{total} rows: {valid} valid, {invalid} invalid, {predicted} predicted, {failed} unavailable.', {
+    total: batchResult.total_rows, valid: batchResult.valid_rows, invalid: batchResult.invalid_rows,
+    predicted: batchResult.predicted_rows, failed: batchResult.failed_rows,
+  });
+  $('#batch-rows').replaceChildren();
+  for (const row of batchResult.rows) {
+    const tr = document.createElement('tr');
+    const details = [...row.errors.map(item => `${label(item.field)}: ${t(item.message)}`), ...(row.prediction?.warnings || []).map(warningText)];
+    for (const value of [row.row, t(row.status), row.prediction ? format(row.prediction.predicted_medical_cost) : '—', details.join('; ') || '—']) {
+      const td = document.createElement('td'); td.textContent = value; tr.append(td);
+    }
+    $('#batch-rows').append(tr);
+  }
+  $('#batch-results').hidden = false; batchControls();
+}
+$('#batch-file').addEventListener('change', async () => {
+  const file = $('#batch-file').files[0]; clearBatch({ resetFile: false });
+  if (!file) return;
+  try {
+    if (file.size > 128 * 1024) throw new Error(t('CSV uploads must be no larger than 131072 bytes.'));
+    const controller = new AbortController(); batchController = controller; batchControls();
+    const buffer = await file.arrayBuffer();
+    if (controller.signal.aborted) return;
+    batchText = new TextDecoder('utf-8', { fatal: true }).decode(buffer);
+    batchController = null; $('#batch-status').textContent = t('CSV ready. Validate it before predicting.'); batchControls();
+  } catch (failure) {
+    batchController = null; batchText = null; batchControls();
+    $('#batch-error').textContent = failure instanceof TypeError ? t('The CSV must use UTF-8 encoding.') : failure.message; $('#batch-error').hidden = false;
+  }
+});
+async function runBatch(operation) {
+  if (batchText === null || batchController) return;
+  const controller = new AbortController(); batchController = controller;
+  const timer = setTimeout(() => controller.abort(new DOMException('Timed out', 'TimeoutError')), 55000);
+  $('#batch-error').hidden = true; batchControls();
+  try {
+    const response = await fetch(`/batch/${operation}`, { method: 'POST', headers: { 'Content-Type': 'text/csv' }, body: batchText, signal: controller.signal, cache: 'no-store' });
+    const data = await response.json();
+    if (!response.ok) throw new Error(t(data.detail || 'Unable to calculate your estimate. Please try again.'));
+    if (controller.signal.aborted) return;
+    batchResult = data; renderBatch();
+  } catch (failure) {
+    if (!controller.signal.aborted || failure.name === 'TimeoutError') {
+      batchResult = null; $('#batch-results').hidden = true;
+      $('#batch-error').textContent = failureText(failure); $('#batch-error').hidden = false;
+    }
+  } finally {
+    clearTimeout(timer);
+    if (batchController === controller) { batchController = null; batchControls(); }
+  }
+}
+$('#batch-clear').addEventListener('click', clearBatch);
+$('#batch-validate').addEventListener('click', () => runBatch('validate'));
+$('#batch-predict').addEventListener('click', () => runBatch('predict'));
+$('#batch-download').addEventListener('click', () => {
+  if (batchResult?.operation !== 'prediction') return;
+  // Quoting alone does not stop spreadsheet formulas. Prefix dangerous cells.
+  const cell = value => {
+    let text = String(value ?? '');
+    if (/^[\s]*[=+@-]/.test(text)) text = "'" + text;
+    return '"' + text.replaceAll('"', '""') + '"';
+  };
+  const rows = [['csv_row', 'status', 'predicted_medical_cost', 'currency', 'display_currency', 'conversion_applied', 'model_version', 'errors', 'warnings', 'uncertainty_note', 'dataset_notes'],
+    ...batchResult.rows.map(row => [row.row, row.status, row.prediction?.predicted_medical_cost, row.prediction?.currency, 'INR', false,
+      row.prediction?.model_version, row.errors.map(item => `${item.field}: ${item.message}`).join('; '), row.prediction?.warnings.join('; '),
+      row.prediction?.uncertainty_note, row.prediction?.dataset_status.notes.join('; ')])];
+  const url = URL.createObjectURL(new Blob([rows.map(row => row.map(cell).join(',')).join('\r\n')], { type: 'text/csv;charset=utf-8' }));
+  const link = document.createElement('a'); link.href = url; link.download = 'careestimate-batch-results.csv';
+  document.body.append(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+});
+document.addEventListener('careestimate:language', renderBatch);
 function failureText(failure) {
   return failure.name === 'TimeoutError' ? t('The request took too long. Please try again.') : failure instanceof TypeError ? t('Could not connect to the prediction service. Please try again.') : failure.message;
 }
@@ -290,8 +447,16 @@ function createReport() {
   if (current.result.prediction_interval) add('p', $('#interval').textContent);
   if (comparable()) { add('h2', t('Comparison')); add('p', `${t('Kept estimate')}: ${format(baseline.result.predicted_medical_cost)}`); add('p', $('#difference').textContent); }
   if (scenario) { add('h2', t('Scenario comparison')); add('p', $('#scenario-summary').textContent); add('p', `${t('Scenario estimate')}: ${format(scenario.result.predicted_medical_cost)}`); add('p', $('#scenario-difference').textContent); }
-  add('h2', t('Leading model factors')); add('p', $('#base-value').textContent);
-  for (const item of current.result.explanation.contributions.slice(0, 5)) add('p', `${label(item.feature)}: ${format(item.contribution)}`);
+  if (scenarios.length) {
+    add('h2', t('Scenario workspace'));
+    for (const item of scenarios) {
+      add('p', `${scenarioName(item)} · ${label(item.feature)}: ${item.feature === 'insurance_coverage_frac' ? `${Math.round(item.value * 100)}%` : item.value} · ${format(item.result.predicted_medical_cost)}`);
+      add('p', difference(item.result.predicted_medical_cost - current.result.predicted_medical_cost));
+      for (const warning of item.result.warnings) add('p', warningText(warning));
+    }
+  }
+  add('h2', t('Full prediction breakdown'));
+  for (const row of waterfallRows(current.result)) add('p', `${row.label}: ${row.delta === null ? format(row.end) : `${format(row.delta)} · ${t('Running total')}: ${format(row.end)}`}`);
   add('h2', t('Model limitations'));
   for (const note of current.result.dataset_status.notes) add('p', t(note));
   for (const warning of [...current.result.warnings, ...(scenario?.result.warnings || [])]) add('p', warningText(warning));
@@ -316,6 +481,7 @@ $('#language').addEventListener('change', event => {
   if (!scenario) $('#scenario-summary').textContent = t('Calculate a scenario to compare it with your current estimate.');
   updateConnection();
   form.querySelectorAll('[aria-invalid]').forEach(validateField);
+  document.dispatchEvent(new Event('careestimate:language'));
 });
 function updateConnection() { $('#connection-note').hidden = navigator.onLine; $('#connection-note').textContent = t('Offline: the interface is available, but predictions need an internet connection.'); }
 window.addEventListener('online', updateConnection); window.addEventListener('offline', updateConnection);
@@ -326,6 +492,7 @@ window.addEventListener('appinstalled', () => { installPrompt = null; $('#instal
 i18n.apply(); showStep(0); syncInsurance(); updateConnection();
 try { applyTheme(localStorage.getItem('careestimate-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')); } catch { applyTheme('light'); }
 renderDatasetStatus(null);
+window.CareDisplay = { format, currency: displayCurrency, warningText };
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => { /* Predictions work without installation support. */ });
 fetch('/model-info', { cache: 'no-store' }).then(response => { if (!response.ok) throw new Error(); return response.json(); }).then(info => {
   modelInfo = info; renderDatasetStatus(current?.result.dataset_status || info.dataset_status);

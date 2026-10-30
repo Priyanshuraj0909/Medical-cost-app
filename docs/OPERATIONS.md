@@ -51,7 +51,7 @@ A language and theme preference are stored under `careestimate-language` and `ca
 
 **Print / Save PDF** opens the browser print dialog with a purpose-built A4 report. Choose the browser's Save as PDF destination. The report includes the estimate, available intervals, model version, optional comparisons/scenario, leading contributions and limitations. Raw form inputs are omitted. No server-side PDF service or automatic file upload is used.
 
-The install button appears when the browser offers installation. Browser installation support varies; users may also use the browser's install/add-to-home-screen menu. `/sw.js` owns only a fixed public-shell allowlist and uses network-first caching. Its cache version is `careestimate-shell-v3`; bump it when intentionally changing the shell cache contract. It never intercepts `POST`, `/predict`, `/model-info`, `/metrics` or `/health`. Offline startup shows the cached interface and an offline notice, and requires a connection for fresh predictions. It never queues health profiles for later upload. Offline reload starts with the static example form, not the previous user's profile.
+The install button appears when the browser offers installation. Browser installation support varies; users may also use the browser's install/add-to-home-screen menu. `/sw.js` owns only a fixed public-shell allowlist and uses network-first caching. Its cache version is `careestimate-shell-v4`; bump it when intentionally changing the shell cache contract. It never intercepts `POST`, `/predict`, `/model-info`, `/metrics` or `/health`. Offline startup shows the cached interface and an offline notice, and requires a connection for fresh predictions. It never queues health profiles for later upload. Offline reload starts with the static example form, not the previous user's profile.
 
 ## Inference and latency metrics
 
@@ -74,3 +74,13 @@ Use **https://medical-cost-app-king-09.vercel.app** and its `/docs` API document
 The older `medical-cost-app-jade.vercel.app` hostname timed out through its default edge addresses from the tested connection, even though the application worked through an alternative Vercel edge route. The team alias uses a reachable route and was verified with ordinary HTTPS, without credentials or DNS overrides. Deployment status alone is not a reachability test.
 
 When changing deployment settings, preserve the alias-specific exception or intentionally replace it with a reviewed public domain. Check the public homepage, `/health`, `/predict`, `/sw.js`, and `/static/manifest.webmanifest` after releases. Do not distribute a preview URL that redirects visitors to Vercel authentication.
+
+## Version 4 prediction tools
+
+The waterfall renders all 20 contributions as floating bars and exposes the same values in an expandable table. The base plus contributions reconciles to the final prediction within rounding to two decimals. Contributions are model associations.
+
+The workspace holds up to six scenarios relative to the last main estimate, with duplicate factor/value combinations rejected. Names are limited to 40 characters and rendered as text. Saved scenarios clear when the main form changes or is recalculated, and appear in JSON exports and printed reports.
+
+CSV uploads accept only raw `text/csv`, UTF-8, at most 131072 bytes and 50 records. Headers must be unique supported API names and include required fields. Preview does no inference; prediction revalidates the upload and reports invalid and unavailable rows individually. HTTP 503 indicates a globally unavailable model. Batch inference runs in a threadpool, with the same single-threaded per-profile model call and aggregate inference metrics as individual requests. There is no persistent job queue. The browser supports one active batch request and clearing aborts it. API responses use `no-store`; the service worker never caches uploads or results. CSV exports omit raw profiles, quote cells and prefix potential spreadsheet formulas. User-defined scenario names and downloaded model explanations may still contain sensitive information.
+
+The shell cache is version 4 and includes the public CSV template. No model retraining or new accuracy claim is part of this release. Dataset recovery and a reviewed evaluation remain open work.

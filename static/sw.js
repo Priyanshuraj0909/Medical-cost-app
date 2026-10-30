@@ -1,7 +1,7 @@
 /* Only a fixed public app shell is cached. Never cache API responses or profiles. */
 'use strict';
-const CACHE = 'careestimate-shell-v3';
-const SHELL = ['/', '/static/style.css', '/static/app.js', '/static/i18n.js', '/static/charts.js',
+const CACHE = 'careestimate-shell-v4';
+const SHELL = ['/', '/static/style.css', '/static/app.js', '/static/i18n.js', '/static/charts.js', '/static/batch-template.csv',
   '/static/vendor/chart.umd.min.js', '/static/favicon.svg', '/static/manifest.webmanifest',
   '/static/fonts/hindi-400.woff2', '/static/fonts/hindi-700.woff2', '/static/icons/icon-192.png', '/static/icons/icon-512.png'];
 self.addEventListener('install', event => {

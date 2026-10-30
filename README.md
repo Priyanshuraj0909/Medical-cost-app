@@ -32,7 +32,9 @@ The project provides both a browser experience for exploring costs and a documen
 
 - **Guided, bilingual experience:** Three validated steps, a show-all option, English/Hindi switching, local Hindi fonts, and light/dark themes.
 - **Interactive exploration:** Chart.js contribution and comparison charts, plus a scenario slider that changes one input without modifying the main profile.
-- **Explained estimates:** Annual predictions, monthly equivalents, five leading feature contributions, and explicit uncertainty status.
+- **Explained estimates:** Annual predictions, monthly equivalents, all 20 feature contributions in a waterfall with accessible running totals, and explicit uncertainty status.
+- **Scenario workspace:** Save, rename, remove and compare up to six scenarios for the current profile; include them in JSON downloads and printable reports.
+- **Batch CSV workflow:** Validate up to 50 profiles (128 KiB), review row-level errors, predict valid rows, and download results with model warnings and dataset notes.
 - **Compare and export:** Keep one estimate, change a profile, compare the results, and download a JSON summary or print a report to save as PDF without raw profile inputs. Comparisons stay in browser memory.
 - **Validated prediction API:** Shared training/serving preprocessing, age scope checks, insurance consistency validation, out-of-range warnings, and model checksum/feature-order verification.
 - **Installable app:** A PWA manifest and public-shell service worker let the interface open offline. Predictions require a connection; profiles and API responses are never cached by the service worker.
@@ -138,11 +140,13 @@ The image runs as a non-root user, includes OpenMP, and checks `/health`. Its in
 1. Open the [live app](https://medical-cost-app-king-09.vercel.app) or your local instance.
 2. Complete **Personal → Health → Insurance** using **Continue** and **Back**. Invalid fields show inline guidance. **Show all fields** opens the complete form.
 3. Select **Calculate my estimate** to view the annual prediction and monthly equivalent.
-4. Read the leading model factors, uncertainty note, and any range warnings.
+4. Follow the full prediction waterfall from the base value through 20 contributions. Expand the table for exact running totals; review the uncertainty note and range warnings.
 5. Select **Keep for comparison**, change inputs, then calculate again to compare profiles.
 6. Explore the scenario panel to change one factor and compare an alternate estimate without editing your main profile.
-7. Select **Download summary** for JSON, or **Print / Save PDF** for a browser-generated report. **Clear comparison** removes the kept estimate.
-8. Use the header to switch English/Hindi or light/dark mode. Where supported, **Install app** adds the app to your device.
+7. Save up to six scenarios to the **Scenario workspace**, rename them, and compare their estimates and changed factors. Editing the main form clears saved scenarios.
+8. Use **Batch CSV estimates** to download a template, upload a UTF-8 CSV, select **Validate CSV**, then **Predict valid rows** and **Download results CSV**. Invalid rows remain in the results with field errors.
+9. Select **Download summary** for JSON, or **Print / Save PDF** for a browser-generated report. **Clear comparison** removes the kept estimate.
+10. Use the header to switch English/Hindi or light/dark mode. Where supported, **Install app** adds the app to your device.
 
 **Use an example** restores the sample profile. The interface uses preceding-12-month care counts; the legacy dataset’s timing remains unverified. Model associations do not establish causal effects or guaranteed savings.
 
@@ -161,6 +165,8 @@ The image runs as a non-root user, includes OpenMP, and checks `/health`. Its in
 | --- | --- | --- |
 | `GET` | `/` | Web interface |
 | `POST` | `/predict` | Annual medical cost prediction |
+| `POST` | `/batch/validate` | Preview CSV row validation without inference |
+| `POST` | `/batch/predict` | Predict valid CSV rows; retain invalid rows and service errors |
 | `GET` | `/health` | Service status and model readiness |
 | `GET` | `/model-info` | Provenance, model scope and validation status |
 | `GET` | `/metrics` | Process-local aggregate counters in Prometheus format |
@@ -227,6 +233,19 @@ Ages must be **18–89**. `no_insurance` requires zero coverage. Unknown fields,
 
 </details>
 
+### Batch API
+
+Both batch endpoints accept a raw UTF-8 CSV body with `Content-Type: text/csv` (not multipart). Use the [CSV template](static/batch-template.csv) for column names. Coverage is a fraction from 0 to 1. Optional blank cells use the API defaults. Limits are 50 profiles and 131072 bytes; excess returns HTTP 413. Invalid headers, encoding or CSV structure return HTTP 400, and unsupported content types return HTTP 415.
+
+```bash
+curl http://localhost:8000/batch/validate \
+  --header 'Content-Type: text/csv' --data-binary @static/batch-template.csv
+curl http://localhost:8000/batch/predict \
+  --header 'Content-Type: text/csv' --data-binary @static/batch-template.csv
+```
+
+Responses include counts and ordered rows with `row`, `status`, `errors`, and an optional full `prediction`. Row numbers identify CSV records (header is record 1), including quoted multiline records. Valid rows use the same inference and warnings as `/predict`. Profiles are validated again before inference. No upload or result is persisted; downloaded CSVs omit raw inputs, retain dataset currency and explicitly record the INR display convention.
+
 ## Testing
 
 ```bash
@@ -287,6 +306,7 @@ A `render.yaml` Blueprint is included for Docker-based hosting. Connect your rep
 
 ```text
 medical-cost-app/
+├── batch.py                     # Bounded CSV parsing and row validation
 ├── app.py                       # API routes, startup, model inference
 ├── schema/                      # Shared validation and feature encoding
 ├── training/                    # Offline evaluation and optional MLflow tracking
@@ -314,6 +334,10 @@ medical-cost-app/
 ## Roadmap
 
 Implemented in this release:
+
+- [x] Full 20-feature prediction waterfall with accessible running totals.
+- [x] Six-scenario workspace with names, removal, charts, exports and reports.
+- [x] CSV validation preview, partial batch predictions and result download.
 
 - [x] Shared preprocessing and reproducible offline evaluation tooling.
 - [x] Feature contributions, range warnings, and explicit uncertainty handling.

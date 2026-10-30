@@ -235,3 +235,63 @@ test('installed app shell works offline and never caches predictions or profiles
     await estimate(page);
   } finally { await context.setOffline(false); await context.close(); }
 });
+
+test('waterfall reconciles and workspace saves, renames, exports and clears scenarios', async () => {
+  const { page, errors } = await pageFor();
+  try {
+    await estimate(page);
+    assert.equal(await page.locator('#waterfall-table tbody tr').count(), 22);
+    const values = await page.locator('#contribution-chart').evaluate(canvas => window.Chart.getChart(canvas).data.datasets[0].data);
+    assert.equal(values.length, 22);
+    assert.ok(Math.abs(values.at(-2)[1] - values.at(-1)[1]) < 0.005);
+    for (let value = 1; value <= 6; value++) {
+      await page.locator('#scenario-value').fill(String(value));
+      await page.locator('#scenario-calculate').click();
+      await page.locator('#scenario-result').waitFor({ state: 'visible' });
+      await page.locator('#scenario-save').click();
+    }
+    assert.equal(await page.locator('#workspace-table tbody tr').count(), 6);
+    await page.locator('#scenario-save').click();
+    assert.match(await page.locator('#workspace-message').innerText(), /six scenarios/);
+    await page.locator('#workspace-table input').first().fill('My scenario');
+    await page.locator('#workspace-heading').click();
+    const pending = page.waitForEvent('download'); await page.locator('#download').click();
+    const summary = JSON.parse(await readFile(await (await pending).path(), 'utf8'));
+    assert.equal(summary.saved_scenarios.length, 6);
+    assert.equal(summary.saved_scenarios[0].name, 'My scenario');
+    assert.equal('profile' in summary.saved_scenarios[0], false);
+    await page.locator('#workspace-table button').first().click();
+    assert.equal(await page.locator('#workspace-table tbody tr').count(), 5);
+    await page.locator('#workspace-clear').click();
+    assert.equal(await page.locator('#workspace-results').isVisible(), false);
+    assert.deepEqual(errors, []);
+  } finally { await page.context().close(); }
+});
+
+test('mobile CSV preview, partial prediction, download and clearing', async () => {
+  const { page, errors } = await pageFor({ width: 390, height: 844 });
+  try {
+    const template = await readFile('static/batch-template.csv', 'utf8');
+    const text = template.trimEnd() + '\n' + template.split('\n')[1].replace('35,female', '17,female') + '\n';
+    await page.locator('#batch-file').setInputFiles({ name: 'profiles.csv', mimeType: 'text/csv', buffer: Buffer.from(text) });
+    await page.waitForFunction(() => !document.querySelector('#batch-validate').disabled);
+    await page.locator('#batch-validate').click();
+    await page.waitForFunction(() => !document.querySelector('#batch-predict').disabled);
+    assert.equal(await page.locator('#batch-rows tr').count(), 2);
+    assert.match(await page.locator('#batch-status').innerText(), /1 valid, 1 invalid, 0 predicted/);
+    await page.locator('#batch-predict').click();
+    await page.waitForFunction(() => !document.querySelector('#batch-download').disabled);
+    assert.match(await page.locator('#batch-status').innerText(), /1 predicted/);
+    assert.match(await page.locator('#batch-rows').innerText(), /₹1,094.90/);
+    const pending = page.waitForEvent('download'); await page.locator('#batch-download').click();
+    const csv = await readFile(await (await pending).path(), 'utf8');
+    assert.match(csv, /1094.9/); assert.match(csv, /invalid/); assert.match(csv, /currency unspecified/);
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+    const accessibility = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
+    assert.deepEqual(accessibility.violations.map(v => ({ id: v.id, nodes: v.nodes.map(n => n.target) })), []);
+    await page.locator('#batch-clear').click();
+    assert.equal(await page.locator('#batch-results').isVisible(), false);
+    assert.equal(await page.locator('#batch-download').isDisabled(), true);
+    assert.deepEqual(errors, []);
+  } finally { await page.context().close(); }
+});

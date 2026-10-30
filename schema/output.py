@@ -1,3 +1,4 @@
+from typing import Literal
 from pydantic import BaseModel, Field
 from schema.dataset import DatasetStatus
 
@@ -30,3 +31,25 @@ class PredictionResponse(BaseModel):
     explanation: Explanation
     prediction_interval: PredictionInterval | None = None
     uncertainty_note: str
+
+
+class BatchError(BaseModel):
+    field: str
+    message: str
+
+
+class BatchRow(BaseModel):
+    row: int = Field(ge=2)
+    status: Literal['valid', 'invalid', 'predicted', 'unavailable']
+    errors: list[BatchError]
+    prediction: PredictionResponse | None = None
+
+
+class BatchResponse(BaseModel):
+    operation: Literal['validation', 'prediction']
+    total_rows: int = Field(ge=1, le=50)
+    valid_rows: int = Field(ge=0, le=50)
+    invalid_rows: int = Field(ge=0, le=50)
+    predicted_rows: int = Field(ge=0, le=50)
+    failed_rows: int = Field(ge=0, le=50)
+    rows: list[BatchRow]
